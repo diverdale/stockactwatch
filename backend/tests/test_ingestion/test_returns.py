@@ -19,7 +19,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.ingestion.pipeline import compute_returns_for_trade
-from app.models.base import Base
 from app.models.computed_return import ComputedReturn
 from app.models.politician import Politician
 from app.models.price_snapshot import PriceSnapshot
@@ -31,13 +30,23 @@ from app.models.trade import Trade
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
+# Only include tables needed for these tests — IngestionLog uses PostgreSQL-specific
+# JSONB which SQLite cannot compile, so we create only the required subset.
+_TEST_TABLES = [
+    Politician.__table__,
+    Trade.__table__,
+    PriceSnapshot.__table__,
+    ComputedReturn.__table__,
+]
+
 
 @pytest.fixture()
 async def async_session():
-    """Async SQLite in-memory engine with all tables created."""
+    """Async SQLite in-memory engine with test-relevant tables created."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        for table in _TEST_TABLES:
+            await conn.run_sync(table.create, checkfirst=True)
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
@@ -47,13 +56,15 @@ async def async_session():
 
 
 async def _seed_politician(session: AsyncSession) -> uuid.UUID:
+    pol_id = uuid.uuid4()
     pol = Politician(
+        id=pol_id,
         external_id="quiver:test politician",
         full_name="Test Politician",
     )
     session.add(pol)
     await session.flush()
-    return pol.id
+    return pol_id
 
 
 async def _seed_trade(
@@ -68,7 +79,9 @@ async def _seed_trade(
     amount_upper: int = 50000,
     external_id: str | None = None,
 ) -> uuid.UUID:
+    trade_id = uuid.uuid4()
     trade = Trade(
+        id=trade_id,
         external_id=external_id or f"test:{uuid.uuid4()}",
         politician_id=politician_id,
         ticker=ticker,
@@ -83,7 +96,7 @@ async def _seed_trade(
     )
     session.add(trade)
     await session.flush()
-    return trade.id
+    return trade_id
 
 
 async def _seed_price_snapshots(session: AsyncSession) -> None:
@@ -91,6 +104,7 @@ async def _seed_price_snapshots(session: AsyncSession) -> None:
     snapshots = json.loads(fixture_path.read_text())
     for s in snapshots:
         snap = PriceSnapshot(
+            id=uuid.uuid4(),
             ticker=s["ticker"],
             snapshot_date=date.fromisoformat(s["snapshot_date"]),
             close_price=Decimal(str(s["close_price"])),
