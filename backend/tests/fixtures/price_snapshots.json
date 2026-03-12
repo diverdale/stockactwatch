@@ -1,0 +1,6 @@
+[
+  {"ticker": "AAPL", "snapshot_date": "2024-01-15", "close_price": 185.00, "source": "yfinance"},
+  {"ticker": "AAPL", "snapshot_date": "2024-12-31", "close_price": 250.00, "source": "yfinance"},
+  {"ticker": "^GSPC", "snapshot_date": "2024-01-15", "close_price": 4780.00, "source": "yfinance"},
+  {"ticker": "^GSPC", "snapshot_date": "2024-12-31", "close_price": 5000.00, "source": "yfinance"}
+]
