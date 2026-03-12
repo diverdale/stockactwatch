@@ -2,11 +2,14 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.internal import router as internal_router
-from app.db import engine
+from app.api.leaderboard import router as leaderboard_router
+from app.db import dispose_engine
 
 
 @asynccontextmanager
@@ -22,13 +25,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     scheduler.shutdown(wait=False)
-    await engine.dispose()
+    await dispose_engine()
 
 
 app = FastAPI(title="Stock Tracker API", lifespan=lifespan)
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": jsonable_encoder(exc.body)},
+    )
+
+
 # Mount internal endpoints — auth guarded by X-Internal-Secret header
 app.include_router(internal_router)
+
+# Mount leaderboard endpoints
+app.include_router(leaderboard_router)
 
 
 @app.get("/health")

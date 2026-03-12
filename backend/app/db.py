@@ -43,3 +43,11 @@ AsyncSessionLocal = _LazySessionLocal()
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
+
+
+async def dispose_engine() -> None:
+    """Dispose the engine connection pool on shutdown. No-op if engine was never created."""
+    global _engine
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
