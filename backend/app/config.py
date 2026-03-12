@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     INGEST_INTERVAL_MINUTES: int = 15
     AMENDMENT_RECHECK_DAYS: int = 90
     INTERNAL_SECRET: str
+    REDIS_URL: str
+    NEXTJS_URL: str = ""
+    REVALIDATE_SECRET: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
