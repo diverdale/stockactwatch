@@ -100,6 +100,8 @@ async def _upsert_politician(
         )
         row = existing.fetchone()
 
+    if row is None:
+        raise RuntimeError(f"Politician upsert failed — no row returned for external_id={ext_id}")
     return uuid.UUID(str(row[0]))
 
 
