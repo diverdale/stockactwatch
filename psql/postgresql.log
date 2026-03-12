@@ -1,0 +1,14 @@
+2026-03-12 17:27:36.605 EDT [53720] LOG:  starting PostgreSQL 18.3 (Postgres.app) on aarch64-apple-darwin23.6.0, compiled by Apple clang version 15.0.0 (clang-1500.3.9.4), 64-bit
+2026-03-12 17:27:36.606 EDT [53720] LOG:  listening on IPv6 address "::1", port 5432
+2026-03-12 17:27:36.606 EDT [53720] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-03-12 17:27:36.607 EDT [53720] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-03-12 17:27:36.610 EDT [53726] LOG:  database system was shut down at 2026-03-12 17:27:36 EDT
+2026-03-12 17:27:36.611 EDT [53720] LOG:  database system is ready to accept connections
+2026-03-12 17:27:47.109 EDT [53750] FATAL:  database "stock_tracker" does not exist
+2026-03-12 17:28:07.398 EDT [53720] LOG:  received fast shutdown request
+2026-03-12 17:28:07.398 EDT [53720] LOG:  aborting any active transactions
+2026-03-12 17:28:07.399 EDT [53720] LOG:  background worker "logical replication launcher" (PID 53729) exited with exit code 1
+2026-03-12 17:28:07.399 EDT [53724] LOG:  shutting down
+2026-03-12 17:28:07.400 EDT [53724] LOG:  checkpoint starting: shutdown immediate
+2026-03-12 17:28:07.428 EDT [53724] LOG:  checkpoint complete: wrote 963 buffers (5.9%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.020 s, sync=0.009 s, total=0.030 s; sync files=310, longest=0.001 s, average=0.001 s; distance=4438 kB, estimate=4438 kB; lsn=0/1BDC868, redo lsn=0/1BDC868
+2026-03-12 17:28:07.433 EDT [53720] LOG:  database system is shut down
