@@ -1,0 +1,35 @@
+[
+  {
+    "TransactionID": "abc123",
+    "Representative": "Nancy Pelosi",
+    "Ticker": "AAPL",
+    "AssetDescription": "Apple Inc. Common Stock",
+    "Transaction": "Purchase",
+    "TransactionDate": "2024-01-15",
+    "DisclosureDate": "2024-02-20",
+    "Range": "$15,001 - $50,000",
+    "Owner": "Self"
+  },
+  {
+    "TransactionID": "def456",
+    "Representative": "Dan Crenshaw",
+    "Ticker": "AAPL",
+    "AssetDescription": "AAPL Call Option 01/2025",
+    "Transaction": "Sale (Full)",
+    "TransactionDate": "2024-03-01",
+    "DisclosureDate": "2024-03-25",
+    "Range": "$1,001 - $15,000",
+    "Owner": "Joint"
+  },
+  {
+    "TransactionID": "ghi789",
+    "Representative": "Tommy Tuberville",
+    "Ticker": "SPY",
+    "AssetDescription": "S&P 500 ETF Trust",
+    "Transaction": "Purchase",
+    "TransactionDate": "2024-02-10",
+    "DisclosureDate": "2024-03-05",
+    "Range": "$100,001 - $250,000",
+    "Owner": "Self"
+  }
+]
