@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 ## Current Position
 
 Phase: 5 of 5 (Sector Dashboard) — IN PROGRESS
-Plan: 1 of N completed (ticker_meta migration and sector enrichment pipeline)
-Status: Phase 5 Plan 01 complete
-Last activity: 2026-03-13 — Phase 5 Plan 01 complete (migration 0005 ticker_meta table, TickerMeta ORM model, fetch_and_store_ticker_meta wired into all 3 pipeline entry points)
+Plan: 2 of N completed (sector API endpoints and backfill)
+Status: Phase 5 Plan 02 complete
+Last activity: 2026-03-13 — Phase 5 Plan 02 complete (GET /sectors, GET /sectors/{slug} with Redis cache-aside, POST /internal/backfill-sector-meta, sectors_router wired into main.py)
 
 Progress: [████████████████████  ] 90% (Phase 5 in progress)
 
@@ -41,6 +41,7 @@ Progress: [████████████████████  ] 90% (
 | Phase 04-search-and-discoverability P01 | 1 | 2 tasks | 5 files |
 | Phase 04-search-and-discoverability P02 | 15 | 3 tasks | 13 files |
 | Phase 05-sector-dashboard P01 | 1 | 2 tasks | 4 files |
+| Phase 05-sector-dashboard P02 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase 05-sector-dashboard, Plan 01]: sector_slug derived via Python slugify() in fetch_and_store_ticker_meta — avoids GENERATED ALWAYS AS complexity and keeps slug logic portable
 - [Phase 05-sector-dashboard, Plan 01]: ETFs and options stored with sector=NULL in ticker_meta (not skipped) — ticker_meta row presence is required for all sector API queries regardless of equity type
 - [Phase 04-search-and-discoverability, Plan 02]: feed page uses static metadata export — canonical is /feed regardless of filter state; filter state is transient pagination concern not SEO-relevant page identity
+- [Phase 05-sector-dashboard]: SectorDetailResponse cached=True deserialization uses **data spread pattern — consistent with leaderboard endpoint cache hit pattern
+- [Phase 05-sector-dashboard]: backfill-sector-meta uses request.headers.get for X-Internal-Secret — avoids exposing secret in FastAPI OpenAPI schema
 
 ### Pending Todos
 
@@ -116,5 +119,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 05-01-PLAN.md — migration 0005, TickerMeta ORM model, fetch_and_store_ticker_meta in prices.py, wired into all 3 pipeline entry points.
+Stopped at: Completed 05-02-PLAN.md — sectors API (GET /sectors, GET /sectors/{slug}), backfill-sector-meta endpoint, sectors_router wired into main.py.
 Resume file: None
