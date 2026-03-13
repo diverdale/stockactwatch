@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 ## Current Position
 
 Phase: 3 of 4 (Frontend Core) — IN PROGRESS
-Plan: 3 of 5 completed (Scaffold + feed page + leaderboard pages)
-Status: Phase 3 Plan 03 complete
-Last activity: 2026-03-13 — Phase 3 Plan 03 complete (returns and volume leaderboard pages with ISR, LEGAL-01 Disclaimer)
+Plan: 5 of 5 completed (Scaffold + feed page + leaderboard pages + politician page + ticker page)
+Status: Phase 3 Plan 05 complete
+Last activity: 2026-03-13 — Phase 3 Plan 05 complete (/tickers/[ticker] page with TickerTradesTable, TradingTimeline Recharts chart, LEGAL-01 Disclaimer, ISR)
 
-Progress: [█████████████████] 62% (Phase 1 + Phase 2 complete + Phase 3 Plans 01-03 complete)
+Progress: [████████████████████] 75% (Phase 1 + Phase 2 complete + Phase 3 all 5 plans complete)
 
 ## Performance Metrics
 
@@ -29,13 +29,14 @@ Progress: [█████████████████] 62% (Phase 1 + P
 |-------|-------|-------|----------|
 | 01-data-foundation | 4 | 20 min | 5 min |
 | 02-api-layer | 3 | 13 min | 4.3 min |
-| 03-frontend-core | 3 | 7 min | 2.3 min |
+| 03-frontend-core | 5 | 12 min | 2.4 min |
 
 **Recent Trend:**
 - Last 5 plans: 5 min
 - Trend: consistent
 
 *Updated after each plan completion*
+| Phase 03-frontend-core P04 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 03-frontend-core, Plan 01]: All API fetches are server-side using API_URL env var (not NEXT_PUBLIC_) since no client-side data fetching
 - [Phase 03-frontend-core, Plan 01]: shadcn/ui initialized with --defaults flag (Radix Nova preset) to bypass interactive prompts in CLI context
 - [Phase 03-frontend-core, Plan 01]: Embedded .git created by create-next-app removed from frontend/ to prevent git submodule issues
+- [Phase 03-frontend-core, Plan 05]: buildMonthlyData runs server-side in page component — chart data derivation stays server-side, TradingTimeline receives pre-computed TimelineDataPoint[]
+- [Phase 03-frontend-core, Plan 05]: Ticker uppercased server-side before API call — normalizes /tickers/aapl and /tickers/AAPL to same backend request
 - [Phase 03-frontend-core, Plan 03]: LEGAL-01 satisfied by rendering Disclaimer above table in page files, not per-row in table components
 - [Phase 03-frontend-core, Plan 03]: ISR cache tags 'leaderboard-returns' and 'leaderboard-volume' match /api/revalidate/route.ts allowed set for on-demand invalidation
 
@@ -93,5 +96,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 03-03-PLAN.md — Returns and volume leaderboard pages with ISR, cache tags, LEGAL-01 Disclaimer. Ready for Phase 3 Plan 04.
+Stopped at: Completed 03-05-PLAN.md — /tickers/[ticker] page with TickerTradesTable, TradingTimeline Recharts area chart, LEGAL-01 Disclaimer, ISR. Phase 3 complete.
 Resume file: None
