@@ -1,0 +1,27 @@
+// app/leaderboard/volume/page.tsx
+import { Disclaimer } from '@/components/disclaimer'
+import { VolumeLeaderboardTable } from '@/components/volume-leaderboard-table'
+import { apiFetch } from '@/lib/api'
+import type { VolumeLeaderboardResponse } from '@/lib/types'
+
+export const revalidate = 300
+
+export default async function VolumeLeaderboardPage() {
+  const data = await apiFetch<VolumeLeaderboardResponse>('/leaderboard/volume', {
+    tags: ['leaderboard-volume'],
+    revalidate: 300,
+  })
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Volume Leaderboard</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Congress members ranked by total number of disclosed trades. {data.total} members total.
+        </p>
+      </div>
+      <Disclaimer />
+      <VolumeLeaderboardTable entries={data.entries} />
+    </div>
+  )
+}
