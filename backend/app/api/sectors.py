@@ -81,6 +81,47 @@ class SectorDetailResponse(BaseModel):
     cached: bool
 
 
+class IndustryEntry(BaseModel):
+    industry: str
+    total_trades: int
+    buy_count: int
+    sell_count: int
+
+
+class IndustryBreakdownResponse(BaseModel):
+    sector: str
+    sector_slug: str
+    industries: list[IndustryEntry]
+    cached: bool
+
+
+class SectorTrade(BaseModel):
+    trade_id: str
+    politician_id: str
+    full_name: str
+    chamber: str | None
+    party: str | None
+    state: str | None
+    ticker: str
+    company_name: str | None
+    asset_type: str
+    transaction_type: str
+    trade_date: str
+    disclosure_date: str
+    amount_range_raw: str
+    amount_lower: float | None
+    amount_upper: float | None
+    price_at_trade: float | None
+
+
+class SectorTradesResponse(BaseModel):
+    sector: str
+    sector_slug: str
+    trades: list[SectorTrade]
+    total: int
+    cached: bool
+
+
 # ---------------------------------------------------------------------------
 # Sentiment helper
 # ---------------------------------------------------------------------------
@@ -163,6 +204,129 @@ async def get_sectors_overview(
     payload = {"sectors": [e.model_dump() for e in entries], "total": len(entries)}
     await redis.setex(cache_key, 600, json.dumps(payload, default=str))
     return SectorOverviewResponse(sectors=entries, total=len(entries), cached=False)
+
+
+@router.get("/{slug}/industries", response_model=IndustryBreakdownResponse)
+async def get_sector_industries(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> IndustryBreakdownResponse:
+    cache_key = f"sectors:industries:{slug}"
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return IndustryBreakdownResponse(**data, cached=True)
+
+    stmt = (
+        select(
+            TickerMeta.industry,
+            func.count(Trade.id).label("total_trades"),
+            func.count(case((Trade.transaction_type.ilike("%purchase%"), Trade.id))).label("buy_count"),
+            func.count(case((Trade.transaction_type.ilike("%sale%"), Trade.id))).label("sell_count"),
+        )
+        .join(TickerMeta, TickerMeta.ticker == Trade.ticker)
+        .where(TickerMeta.sector_slug == slug)
+        .where(TickerMeta.industry.is_not(None))
+        .group_by(TickerMeta.industry)
+        .order_by(func.count(Trade.id).desc())
+    )
+    rows = (await db.execute(stmt)).all()
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"Sector '{slug}' not found or has no industry data")
+
+    sector_name_stmt = select(TickerMeta.sector).where(TickerMeta.sector_slug == slug).limit(1)
+    sector_row = (await db.execute(sector_name_stmt)).one_or_none()
+    sector_name = sector_row.sector if sector_row else slug
+
+    industries = [
+        IndustryEntry(
+            industry=row.industry,
+            total_trades=row.total_trades,
+            buy_count=row.buy_count,
+            sell_count=row.sell_count,
+        )
+        for row in rows
+    ]
+    payload = {"sector": sector_name, "sector_slug": slug, "industries": [i.model_dump() for i in industries]}
+    await redis.setex(cache_key, 600, json.dumps(payload, default=str))
+    return IndustryBreakdownResponse(sector=sector_name, sector_slug=slug, industries=industries, cached=False)
+
+
+@router.get("/{slug}/trades", response_model=SectorTradesResponse)
+async def get_sector_trades(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> SectorTradesResponse:
+    cache_key = f"sectors:trades:{slug}"
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return SectorTradesResponse(**data, cached=True)
+
+    sector_name_stmt = select(TickerMeta.sector).where(TickerMeta.sector_slug == slug).limit(1)
+    sector_row = (await db.execute(sector_name_stmt)).one_or_none()
+    if sector_row is None:
+        raise HTTPException(status_code=404, detail=f"Sector '{slug}' not found")
+    sector_name = sector_row.sector
+
+    stmt = (
+        select(
+            Trade.id.label("trade_id"),
+            Politician.id.label("politician_id"),
+            Politician.full_name,
+            Politician.chamber,
+            Politician.party,
+            Politician.state,
+            Trade.ticker,
+            TickerInfo.company_name,
+            Trade.asset_type,
+            Trade.transaction_type,
+            Trade.trade_date,
+            Trade.disclosure_date,
+            Trade.amount_range_raw,
+            Trade.amount_lower,
+            Trade.amount_upper,
+            Trade.price_at_trade,
+        )
+        .join(TickerMeta, TickerMeta.ticker == Trade.ticker)
+        .join(Politician, Politician.id == Trade.politician_id)
+        .outerjoin(TickerInfo, TickerInfo.ticker == Trade.ticker)
+        .where(TickerMeta.sector_slug == slug)
+        .order_by(Trade.trade_date.desc())
+    )
+    rows = (await db.execute(stmt)).all()
+
+    trades = [
+        SectorTrade(
+            trade_id=str(row.trade_id),
+            politician_id=str(row.politician_id),
+            full_name=row.full_name,
+            chamber=row.chamber,
+            party=row.party,
+            state=row.state,
+            ticker=row.ticker,
+            company_name=row.company_name,
+            asset_type=row.asset_type,
+            transaction_type=row.transaction_type,
+            trade_date=str(row.trade_date),
+            disclosure_date=str(row.disclosure_date),
+            amount_range_raw=row.amount_range_raw or "",
+            amount_lower=row.amount_lower,
+            amount_upper=row.amount_upper,
+            price_at_trade=row.price_at_trade,
+        )
+        for row in rows
+    ]
+    payload = {
+        "sector": sector_name,
+        "sector_slug": slug,
+        "trades": [t.model_dump() for t in trades],
+        "total": len(trades),
+    }
+    await redis.setex(cache_key, 600, json.dumps(payload, default=str))
+    return SectorTradesResponse(sector=sector_name, sector_slug=slug, trades=trades, total=len(trades), cached=False)
 
 
 @router.get("/{slug}", response_model=SectorDetailResponse)
