@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Make congressional trading data so clear, current, and compelling that it becomes the go-to reference for anyone asking "what is Congress buying?"
-**Current focus:** Phase 5 — Sector Dashboard
+**Current focus:** Phase 6 — Sector Depth
 
 ## Current Position
 
-Phase: 5 of 5 (Sector Dashboard) — COMPLETE
-Plan: 3 of 3 completed (sector frontend pages)
-Status: Phase 5 Plan 03 complete — Phase 5 fully complete
-Last activity: 2026-03-13 — Phase 5 Plan 03 complete (/sectors overview page, /sectors/[slug] detail page with SectorTrendChart stacked BarChart, 6 sector TypeScript interfaces)
+Phase: 6 of 6 (Sector Depth) — IN PROGRESS
+Plan: 3 of 3 completed (politician sector radar)
+Status: Phase 6 Plan 03 complete — GET /politicians/{id}/sectors endpoint + PoliticianSectorRadar component
+Last activity: 2026-03-13 — Phase 6 Plan 03 complete (politician sector radar with Recharts RadarChart, server-side sectors fetch in profile page)
 
-Progress: [██████████████████████] 100% (Phase 5 complete)
+Progress: [██████████████████████] 100% (Phase 6 Plan 03 complete)
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [██████████████████████] 1
 | Phase 05-sector-dashboard P01 | 1 | 2 tasks | 4 files |
 | Phase 05-sector-dashboard P02 | 3 | 2 tasks | 3 files |
 | Phase 05-sector-dashboard P03 | 1 | 2 tasks | 4 files |
+| Phase 06-sector-depth P03 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 05-sector-dashboard]: params in Next.js 16 dynamic routes is a Promise — await params before destructuring slug
 - [Phase 05-sector-dashboard]: apiFetch second arg uses { tags, revalidate } shape (not { next: { revalidate, tags } }) — matched existing project pattern
 - [Phase 05-sector-dashboard]: Raw ResponsiveContainer from recharts used directly in sector-trend-chart — project has no shadcn ChartContainer wrapper
+- [Phase 06-sector-depth, Plan 03]: profile_ticker router has no prefix — GET /politicians/{id}/sectors registered directly on router without prefix
+- [Phase 06-sector-depth, Plan 03]: Sector fetch in page.tsx wrapped in try/catch — sector radar is additive, profile page renders without it on fetch failure
+- [Phase 06-sector-depth, Plan 03]: PoliticianDashboard unchanged — PoliticianSectorRadar rendered as additive wrapper in page.tsx only
 
 ### Pending Todos
 
@@ -123,5 +127,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 05-03-PLAN.md — /sectors overview page, /sectors/[slug] detail page with SectorTrendChart stacked BarChart, 6 sector TypeScript interfaces. Phase 5 fully complete.
+Stopped at: Completed 06-03-PLAN.md — GET /politicians/{id}/sectors endpoint + PoliticianSectorRadar component with Recharts RadarChart on politician profile pages.
 Resume file: None
