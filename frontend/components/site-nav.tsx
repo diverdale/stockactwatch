@@ -5,6 +5,7 @@ import { SearchCombobox } from '@/components/search-combobox'
 
 const links = [
   { href: '/feed', label: 'Activity Feed' },
+  { href: '/politicians', label: 'Politicians' },
   { href: '/leaderboard/returns', label: 'Returns' },
   { href: '/leaderboard/volume', label: 'Volume' },
   { href: '/cluster', label: 'Clusters' },

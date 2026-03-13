@@ -213,3 +213,21 @@ export interface SectorTradesResponse {
   total: number
   cached: boolean
 }
+
+export interface PoliticianListEntry {
+  politician_id: string
+  full_name: string
+  chamber: string | null
+  party: string | null
+  state: string | null
+  photo_url: string | null
+  trade_count: number
+  buy_count: number
+  sell_count: number
+}
+
+export interface PoliticianListResponse {
+  politicians: PoliticianListEntry[]
+  total: number
+  cached: boolean
+}

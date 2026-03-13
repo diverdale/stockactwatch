@@ -31,7 +31,80 @@ class PoliticianSectorsResponse(BaseModel):
     sectors: list[PoliticianSectorEntry]
     cached: bool
 
+
+class PoliticianListEntry(BaseModel):
+    politician_id: str
+    full_name: str
+    chamber: str | None
+    party: str | None
+    state: str | None
+    photo_url: str | None
+    trade_count: int
+    buy_count: int
+    sell_count: int
+
+class PoliticianListResponse(BaseModel):
+    politicians: list[PoliticianListEntry]
+    total: int
+    cached: bool
+
 BIOGUIDE_PHOTO_URL = "https://bioguide.congress.gov/bioguide/photo/{letter}/{bio_id}.jpg"
+
+
+@router.get("/politicians", response_model=PoliticianListResponse)
+async def get_politicians_list(
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> PoliticianListResponse:
+    cache_key = "politicians:list"
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return PoliticianListResponse(
+            politicians=[PoliticianListEntry(**p) for p in data["politicians"]],
+            total=data["total"],
+            cached=True,
+        )
+
+    from sqlalchemy import case as sa_case
+    stmt = (
+        select(
+            Politician.id,
+            Politician.full_name,
+            Politician.chamber,
+            Politician.party,
+            Politician.state,
+            Politician.bio_guide_id,
+            func.count(Trade.id).label("trade_count"),
+            func.count(sa_case((Trade.transaction_type.ilike("%purchase%"), Trade.id))).label("buy_count"),
+            func.count(sa_case((Trade.transaction_type.ilike("%sale%"), Trade.id))).label("sell_count"),
+        )
+        .join(Trade, Trade.politician_id == Politician.id)
+        .group_by(Politician.id, Politician.full_name, Politician.chamber, Politician.party, Politician.state, Politician.bio_guide_id)
+        .order_by(func.count(Trade.id).desc())
+    )
+    rows = (await db.execute(stmt)).all()
+
+    politicians = [
+        PoliticianListEntry(
+            politician_id=str(row.id),
+            full_name=row.full_name,
+            chamber=row.chamber,
+            party=row.party,
+            state=row.state,
+            photo_url=(
+                BIOGUIDE_PHOTO_URL.format(letter=row.bio_guide_id[0].upper(), bio_id=row.bio_guide_id)
+                if row.bio_guide_id else None
+            ),
+            trade_count=row.trade_count,
+            buy_count=row.buy_count,
+            sell_count=row.sell_count,
+        )
+        for row in rows
+    ]
+    payload = {"politicians": [p.model_dump() for p in politicians], "total": len(politicians)}
+    await redis.setex(cache_key, 600, json.dumps(payload, default=str))
+    return PoliticianListResponse(politicians=politicians, total=len(politicians), cached=False)
 
 
 @router.get("/politicians/{politician_id}", response_model=PoliticianProfile)
