@@ -22,7 +22,7 @@ from sqlalchemy.sql import func
 from app.config import settings
 from app.db import AsyncSessionLocal
 from app.ingestion.normalizer import normalize_quiver_trade
-from app.ingestion.quiver import fetch_congress_trades
+from app.ingestion.quiver import fetch_congress_trades, fetch_congress_trades_bulk
 from app.models.computed_return import ComputedReturn
 from app.models.ingestion_log import IngestionLog
 from app.models.politician import Politician
@@ -226,7 +226,13 @@ async def upsert_trades_batch(session: AsyncSession, trades: list[dict]) -> int:
 
 
 async def _upsert_politician(
-    session: AsyncSession, politician_name: str, source: str
+    session: AsyncSession,
+    politician_name: str,
+    source: str,
+    bio_guide_id: str | None = None,
+    chamber: str | None = None,
+    party: str | None = None,
+    state: str | None = None,
 ) -> uuid.UUID:
     """Upsert a politician by external_id and return their UUID.
 
@@ -235,13 +241,29 @@ async def _upsert_politician(
     """
     ext_id = f"{source}:{politician_name.lower().strip()}"
 
-    stmt = pg_insert(Politician).values(
-        external_id=ext_id,
-        full_name=politician_name,
-    )
+    values: dict = {"external_id": ext_id, "full_name": politician_name}
+    if bio_guide_id is not None:
+        values["bio_guide_id"] = bio_guide_id
+    if chamber is not None:
+        values["chamber"] = chamber
+    if party is not None:
+        values["party"] = party
+    if state is not None:
+        values["state"] = state
+
+    stmt = pg_insert(Politician).values(**values)
+    update_set: dict = {"full_name": stmt.excluded.full_name}
+    if bio_guide_id is not None:
+        update_set["bio_guide_id"] = stmt.excluded.bio_guide_id
+    if chamber is not None:
+        update_set["chamber"] = stmt.excluded.chamber
+    if party is not None:
+        update_set["party"] = stmt.excluded.party
+    if state is not None:
+        update_set["state"] = stmt.excluded.state
     stmt = stmt.on_conflict_do_update(
         index_elements=["external_id"],
-        set_={"full_name": stmt.excluded.full_name},
+        set_=update_set,
     )
     # Use RETURNING to get the id without a second SELECT.
     stmt = stmt.returning(Politician.id)
@@ -266,7 +288,7 @@ async def run_ingestion_pipeline() -> None:
     The caller (APScheduler AsyncIOScheduler) invokes this coroutine directly on the
     existing event loop — do not wrap it with the asyncio run helper.
     """
-    from app.ingestion.prices import fetch_and_store_prices
+    from app.ingestion.prices import fetch_and_store_prices, fetch_and_store_ticker_info, fetch_and_store_ticker_meta
 
     started_at = datetime.now(timezone.utc)
     trades_fetched = 0
@@ -285,7 +307,10 @@ async def run_ingestion_pipeline() -> None:
                 try:
                     trade_in = normalize_quiver_trade(raw)
                     politician_id = await _upsert_politician(
-                        session, trade_in.politician_name, trade_in.source
+                        session, trade_in.politician_name, trade_in.source,
+                        bio_guide_id=trade_in.bio_guide_id,
+                        chamber=trade_in.chamber, party=trade_in.party,
+                        state=trade_in.state,
                     )
                     trade_dict = {
                         "external_id": trade_in.external_id,
@@ -311,9 +336,12 @@ async def run_ingestion_pipeline() -> None:
 
             trades_upserted = await upsert_trades_batch(session, trade_dicts)
 
-            # Fetch prices and compute returns for this batch
+            # Fetch prices, company names, and compute returns for this batch
             equity_tickers = [t.ticker for t in normalized if t.asset_type.value == "equity"]
+            all_tickers = list(dict.fromkeys(t.ticker for t in normalized))
             await fetch_and_store_prices(session, equity_tickers)
+            await fetch_and_store_ticker_info(session, all_tickers)
+            await fetch_and_store_ticker_meta(session, all_tickers)
             await compute_returns_for_batch(session, [t.external_id for t in normalized])
 
             if errors:
@@ -353,7 +381,7 @@ async def run_amendment_recheck() -> None:
     with whatever the API returns. Runs nightly at 02:00 UTC via APScheduler cron trigger.
     Invoked directly by APScheduler — no run helper wrapping needed.
     """
-    from app.ingestion.prices import fetch_and_store_prices
+    from app.ingestion.prices import fetch_and_store_prices, fetch_and_store_ticker_info, fetch_and_store_ticker_meta
 
     started_at = datetime.now(timezone.utc)
     trades_fetched = 0
@@ -374,7 +402,10 @@ async def run_amendment_recheck() -> None:
                 try:
                     trade_in = normalize_quiver_trade(raw)
                     politician_id = await _upsert_politician(
-                        session, trade_in.politician_name, trade_in.source
+                        session, trade_in.politician_name, trade_in.source,
+                        bio_guide_id=trade_in.bio_guide_id,
+                        chamber=trade_in.chamber, party=trade_in.party,
+                        state=trade_in.state,
                     )
                     trade_dict = {
                         "external_id": trade_in.external_id,
@@ -404,7 +435,10 @@ async def run_amendment_recheck() -> None:
 
             # Re-compute returns for amended trades
             equity_tickers = [t.ticker for t in normalized if t.asset_type.value == "equity"]
+            all_tickers = list(dict.fromkeys(t.ticker for t in normalized))
             await fetch_and_store_prices(session, equity_tickers)
+            await fetch_and_store_ticker_info(session, all_tickers)
+            await fetch_and_store_ticker_meta(session, all_tickers)
             await compute_returns_for_batch(session, [t.external_id for t in normalized])
 
             if errors:
@@ -432,6 +466,108 @@ async def run_amendment_recheck() -> None:
     logger.info(
         "Amendment recheck complete: since=%s fetched=%d upserted=%d status=%s",
         since,
+        trades_fetched,
+        trades_upserted,
+        status,
+    )
+
+
+async def run_full_backfill(since_date: str | None = None) -> None:
+    """Fetch the full historical congress trade dataset, normalize, upsert, and compute returns.
+
+    Uses the bulk Quiver endpoint rather than the live feed so that all historical records
+    are retrieved in one call.  Pass since_date (ISO-8601 string, e.g. "2020-01-01") to
+    limit the backfill window; omit it to import everything available.
+
+    Invoked manually (CLI / admin endpoint) — not scheduled automatically.
+    """
+    from app.ingestion.prices import fetch_and_store_prices, fetch_and_store_ticker_info, fetch_and_store_ticker_meta
+
+    started_at = datetime.now(timezone.utc)
+    trades_fetched = 0
+    trades_upserted = 0
+    errors: dict = {}
+    status = "success"
+
+    logger.info("Full backfill started (since_date=%s)", since_date)
+
+    async with AsyncSessionLocal() as session:
+        try:
+            raw_records = await fetch_congress_trades_bulk(since_date=since_date)
+            trades_fetched = len(raw_records)
+            logger.info("Full backfill: retrieved %d records from bulk endpoint", trades_fetched)
+
+            normalized: list = []
+            trade_dicts: list[dict] = []
+            for raw in raw_records:
+                try:
+                    trade_in = normalize_quiver_trade(raw)
+                    politician_id = await _upsert_politician(
+                        session, trade_in.politician_name, trade_in.source,
+                        bio_guide_id=trade_in.bio_guide_id,
+                        chamber=trade_in.chamber, party=trade_in.party,
+                        state=trade_in.state,
+                    )
+                    trade_dict = {
+                        "external_id": trade_in.external_id,
+                        "politician_id": politician_id,
+                        "ticker": trade_in.ticker,
+                        "asset_type": trade_in.asset_type.value,
+                        "transaction_type": trade_in.transaction_type,
+                        "trade_date": trade_in.trade_date,
+                        "disclosure_date": trade_in.disclosure_date,
+                        "amount_range_raw": trade_in.amount_range_raw,
+                        "amount_lower": trade_in.amount_lower,
+                        "amount_upper": trade_in.amount_upper,
+                        "owner": trade_in.owner,
+                        "amendment_version": trade_in.amendment_version,
+                        "return_calculable": trade_in.return_calculable,
+                        "source": trade_in.source,
+                    }
+                    normalized.append(trade_in)
+                    trade_dicts.append(trade_dict)
+                except Exception as record_exc:
+                    logger.warning(
+                        "Full backfill: skipping record due to normalization error: %s", record_exc
+                    )
+                    errors.setdefault("records", []).append(str(record_exc))
+
+            trades_upserted = await upsert_trades_batch(session, trade_dicts)
+            logger.info("Full backfill: upserted %d records", trades_upserted)
+
+            # Fetch prices, company names, and compute returns for the full batch
+            equity_tickers = [t.ticker for t in normalized if t.asset_type.value == "equity"]
+            all_tickers = list(dict.fromkeys(t.ticker for t in normalized))
+            await fetch_and_store_prices(session, equity_tickers)
+            await fetch_and_store_ticker_info(session, all_tickers)
+            await fetch_and_store_ticker_meta(session, all_tickers)
+            await compute_returns_for_batch(session, [t.external_id for t in normalized])
+
+            if errors:
+                status = "partial"
+
+        except Exception as exc:
+            logger.exception("Full backfill failed: %s", exc)
+            status = "failed"
+            errors["pipeline"] = str(exc)
+
+        finally:
+            finished_at = datetime.now(timezone.utc)
+            log_entry = IngestionLog(
+                source="quiver_bulk_backfill",
+                started_at=started_at,
+                finished_at=finished_at,
+                trades_fetched=trades_fetched,
+                trades_upserted=trades_upserted,
+                errors=errors if errors else None,
+                status=status,
+            )
+            session.add(log_entry)
+            await session.commit()
+
+    logger.info(
+        "Full backfill complete: since_date=%s fetched=%d upserted=%d status=%s",
+        since_date,
         trades_fetched,
         trades_upserted,
         status,

@@ -116,3 +116,110 @@ async def fetch_and_store_prices(
             await session.execute(stmt)
 
     await session.commit()
+
+
+async def fetch_and_store_ticker_info(
+    session: AsyncSession,
+    tickers: list[str],
+) -> None:
+    """Fetch company names from yfinance and upsert into ticker_info.
+
+    Only fetches for tickers not yet in the table (INSERT OR IGNORE pattern).
+    Runs synchronous yfinance I/O in a thread to avoid blocking the event loop.
+    """
+    import asyncio
+
+    from app.models.ticker_info import TickerInfo
+    from sqlalchemy import select
+
+    if not tickers:
+        return
+
+    # Only look up tickers we don't have yet
+    existing = await session.execute(select(TickerInfo.ticker))
+    known = {row[0] for row in existing.fetchall()}
+    to_fetch = [t for t in dict.fromkeys(tickers) if t not in known and t != "^GSPC"]
+
+    for ticker in to_fetch:
+        try:
+            import yfinance as yf
+
+            def _get_name(t: str) -> str | None:
+                info = yf.Ticker(t).info
+                return info.get("longName") or info.get("shortName")
+
+            company_name = await asyncio.to_thread(_get_name, ticker)
+            if company_name:
+                stmt = pg_insert(TickerInfo).values(ticker=ticker, company_name=company_name)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["ticker"],
+                    set_={"company_name": stmt.excluded.company_name},
+                )
+                await session.execute(stmt)
+        except Exception as exc:
+            logger.warning("ticker_info: failed to fetch name for %s: %s", ticker, exc)
+
+    await session.commit()
+
+
+async def fetch_and_store_ticker_meta(
+    session: AsyncSession,
+    tickers: list[str],
+) -> None:
+    """Fetch sector/industry from yfinance and upsert into ticker_meta.
+
+    Only fetches for tickers not yet in ticker_meta (INSERT OR IGNORE pattern).
+    ETFs and options return sector=None — stored as NULL, not skipped.
+    Runs synchronous yfinance I/O in a thread to avoid blocking the event loop.
+    """
+    import asyncio
+    import re
+
+    from app.models.ticker_meta import TickerMeta
+    from sqlalchemy import select
+
+    def slugify(text: str) -> str:
+        text = text.lower().strip()
+        text = re.sub(r'[^\w\s-]', '', text)
+        text = re.sub(r'[\s_]+', '-', text)
+        return re.sub(r'-+', '-', text)
+
+    if not tickers:
+        return
+
+    existing = await session.execute(select(TickerMeta.ticker))
+    known = {row[0] for row in existing.fetchall()}
+    to_fetch = [t for t in dict.fromkeys(tickers) if t not in known and t != "^GSPC"]
+
+    for ticker in to_fetch:
+        try:
+            import yfinance as yf
+
+            def _get_meta(t: str) -> dict:
+                info = yf.Ticker(t).info
+                sector = info.get("sector")   # None for ETFs/options
+                industry = info.get("industry")
+                quote_type = info.get("quoteType")
+                return {
+                    "sector": sector,
+                    "industry": industry,
+                    "sector_slug": slugify(sector) if sector else None,
+                    "quote_type": quote_type,
+                }
+
+            meta = await asyncio.to_thread(_get_meta, ticker)
+            stmt = pg_insert(TickerMeta).values(ticker=ticker, **meta)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["ticker"],
+                set_={
+                    "sector": stmt.excluded.sector,
+                    "industry": stmt.excluded.industry,
+                    "sector_slug": stmt.excluded.sector_slug,
+                    "quote_type": stmt.excluded.quote_type,
+                },
+            )
+            await session.execute(stmt)
+        except Exception as exc:
+            logger.warning("ticker_meta: failed to fetch meta for %s: %s", ticker, exc)
+
+    await session.commit()
