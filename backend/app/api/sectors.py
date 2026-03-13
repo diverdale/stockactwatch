@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from redis.asyncio import Redis
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache import get_redis
@@ -136,9 +136,9 @@ def _net_sentiment(buy_count: int, sell_count: int) -> str:
 
 
 def _is_trending(count_30d: int, count_90d: int) -> bool:
-    """True when 30d activity > 2x the 90d monthly average."""
+    """True when 30d rate is at least 80% of the 90d monthly average (sector is actively trading)."""
     monthly_avg_90d = count_90d / 3.0
-    return monthly_avg_90d > 0 and count_30d > 2 * monthly_avg_90d
+    return monthly_avg_90d > 0 and count_30d >= 0.8 * monthly_avg_90d
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +424,7 @@ async def get_sector_detail(
     # Monthly trend (DATE_TRUNC)
     trend_stmt = (
         select(
-            func.date_trunc("month", Trade.trade_date).label("month"),
+            func.date_trunc(literal_column("'month'"), Trade.trade_date).label("month"),
             func.count(
                 case((Trade.transaction_type.ilike("%purchase%"), Trade.id))
             ).label("buy_count"),
@@ -435,8 +435,8 @@ async def get_sector_detail(
         )
         .join(TickerMeta, TickerMeta.ticker == Trade.ticker)
         .where(TickerMeta.sector_slug == slug)
-        .group_by(func.date_trunc("month", Trade.trade_date))
-        .order_by(func.date_trunc("month", Trade.trade_date).asc())
+        .group_by(func.date_trunc(literal_column("'month'"), Trade.trade_date))
+        .order_by(func.date_trunc(literal_column("'month'"), Trade.trade_date).asc())
     )
     trend_rows = (await db.execute(trend_stmt)).all()
     # date_trunc returns datetime via asyncpg — format as "YYYY-MM"
