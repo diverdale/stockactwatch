@@ -1,4 +1,5 @@
 // app/tickers/[ticker]/page.tsx
+import type { Metadata } from 'next'
 import { TickerTradesTable } from '@/components/ticker-trades-table'
 import { TradingTimeline, type TimelineDataPoint } from '@/components/trading-timeline'
 import { Disclaimer } from '@/components/disclaimer'
@@ -6,6 +7,18 @@ import { apiFetch } from '@/lib/api'
 import type { TickerTrades } from '@/lib/types'
 
 export const revalidate = 3600
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ ticker: string }>
+}): Promise<Metadata> {
+  const { ticker } = await params
+  return {
+    title: `${ticker.toUpperCase()} — Congress Trades`,
+    alternates: { canonical: `/tickers/${ticker.toUpperCase()}` },
+  }
+}
 
 function buildMonthlyData(trades: TickerTrades['trades']): TimelineDataPoint[] {
   const counts: Record<string, number> = {}

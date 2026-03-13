@@ -1,4 +1,5 @@
 // app/politicians/[id]/page.tsx
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -9,6 +10,18 @@ import { apiFetch } from '@/lib/api'
 import type { PoliticianProfile } from '@/lib/types'
 
 export const revalidate = 3600
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  return {
+    title: 'Congress Member Profile — Congress Trades',
+    alternates: { canonical: `/politicians/${id}` },
+  }
+}
 
 export default async function PoliticianPage({
   params,

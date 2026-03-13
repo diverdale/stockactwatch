@@ -1,10 +1,17 @@
 // app/feed/page.tsx
+import type { Metadata } from 'next'
 import { FeedTable } from '@/components/feed-table'
 import { FeedFilters } from '@/components/feed-filters'
 import { apiFetch } from '@/lib/api'
 import type { FeedResponse } from '@/lib/types'
 
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Activity Feed — Congress Trades',
+  description: 'Recent congressional stock trade disclosures from public STOCK Act filings.',
+  alternates: { canonical: '/feed' },
+}
 
 export default async function FeedPage({
   searchParams,

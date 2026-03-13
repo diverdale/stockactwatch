@@ -1,4 +1,4 @@
-import { parseAsString, createSerializer } from 'nuqs'
+import { parseAsString, createSerializer } from 'nuqs/server'
 
 export const leaderboardParams = {
   chamber: parseAsString.withDefault(''),
