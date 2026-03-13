@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Make congressional trading data so clear, current, and compelling that it becomes the go-to reference for anyone asking "what is Congress buying?"
-**Current focus:** Phase 3 — Frontend Core
+**Current focus:** Phase 4 — Search and Discoverability
 
 ## Current Position
 
-Phase: 3 of 4 (Frontend Core) — IN PROGRESS
-Plan: 5 of 5 completed (Scaffold + feed page + leaderboard pages + politician page + ticker page)
-Status: Phase 3 Plan 05 complete
-Last activity: 2026-03-13 — Phase 3 Plan 05 complete (/tickers/[ticker] page with TickerTradesTable, TradingTimeline Recharts chart, LEGAL-01 Disclaimer, ISR)
+Phase: 4 of 4 (Search and Discoverability) — IN PROGRESS
+Plan: 1 of 2 completed (pg_trgm search endpoints + feed filtering)
+Status: Phase 4 Plan 01 complete
+Last activity: 2026-03-13 — Phase 4 Plan 01 complete (GET /search/politicians, GET /search/tickers, feed chamber/party filtering, Redis 30s TTL, migration 0003)
 
-Progress: [████████████████████] 75% (Phase 1 + Phase 2 complete + Phase 3 all 5 plans complete)
+Progress: [█████████████████████░] 81% (Phase 1 + Phase 2 + Phase 3 complete + Phase 4 Plan 01 complete)
 
 ## Performance Metrics
 
@@ -30,6 +30,7 @@ Progress: [████████████████████] 75% (Ph
 | 01-data-foundation | 4 | 20 min | 5 min |
 | 02-api-layer | 3 | 13 min | 4.3 min |
 | 03-frontend-core | 5 | 12 min | 2.4 min |
+| 04-search-and-discoverability | 1 | 1 min | 1 min |
 
 **Recent Trend:**
 - Last 5 plans: 5 min
@@ -37,6 +38,7 @@ Progress: [████████████████████] 75% (Ph
 
 *Updated after each plan completion*
 | Phase 03-frontend-core P04 | 2 | 2 tasks | 3 files |
+| Phase 04-search-and-discoverability P01 | 1 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 03-frontend-core]: Disclaimer renders between profile header and PoliticianMetrics to satisfy LEGAL-01 on all analysis pages
 - [Phase 03-frontend-core]: PROF-04 committee assignments note as informational text in header — full data requires ProPublica integration (Phase 6 v2 concern)
 - [Phase 03-frontend-core]: Options trades identified by return_calculable === false (not asset_type check) — consistent with Phase 1 TradeIn schema-level enforcement
+- [Phase 04-search-and-discoverability, Plan 01]: word_similarity <% operator used (not similarity()) — handles partial matches like "pelosi" -> "Nancy Pelosi"; <% uses word_similarity_threshold not full-string threshold
+- [Phase 04-search-and-discoverability, Plan 01]: ILIKE prefix for ticker search — 1-2 char tickers have no extractable trigrams so similarity() would miss them; ILIKE works for all lengths
+- [Phase 04-search-and-discoverability, Plan 01]: CREATE EXTENSION placed first in migration upgrade() — GIN index creation fails with "type gtrgm does not exist" if extension not present
 
 ### Pending Todos
 
@@ -102,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 03-02-PLAN.md — feed page (app/feed/page.tsx), FeedTable, FeedFilters with nuqs v2, NuqsAdapter in root layout. Phase 3 Plan 02 SUMMARY.md created.
+Stopped at: Completed 04-01-PLAN.md — GET /search/politicians (pg_trgm word_similarity), GET /search/tickers (ILIKE prefix), Redis 30s TTL caching, feed chamber/party WHERE filtering, migration 0003.
 Resume file: None
