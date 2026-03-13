@@ -8,8 +8,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import cache as redis_cache
+from app.api.feed import router as feed_router
 from app.api.internal import router as internal_router
 from app.api.leaderboard import router as leaderboard_router
+from app.api.profile_ticker import router as profile_ticker_router
 from app.config import settings
 from app.db import dispose_engine
 
@@ -50,6 +52,12 @@ app.include_router(internal_router)
 
 # Mount leaderboard endpoints
 app.include_router(leaderboard_router)
+
+# Mount feed endpoint
+app.include_router(feed_router)
+
+# Mount politician profile and ticker endpoints
+app.include_router(profile_ticker_router)
 
 
 @app.get("/health")
