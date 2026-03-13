@@ -63,14 +63,14 @@ Plans:
   3. A visitor can navigate to any traded ticker's page and see all Congress members who have traded it, each trade's details, and a timeline chart of congressional trading activity in that stock
   4. Every leaderboard page and analysis surface displays a visible disclaimer that data is from public STOCK Act disclosures, returns are estimates only, and this is not financial advice
   5. All pages load and are usable on a mobile-width viewport without horizontal scrolling
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 03-01: Next.js project scaffold, layout, and shared components (shadcn/ui, Tailwind, ISR config)
-- [ ] 03-02: Activity feed page
-- [ ] 03-03: Leaderboard pages (returns and volume) with disclaimer
-- [ ] 03-04: Politician profile pages
-- [ ] 03-05: Ticker pages with timeline chart
+- [ ] 03-01-PLAN.md — Next.js 16 scaffold, shadcn/ui init, root layout + nav, ISR revalidate Route Handler, shared types and apiFetch wrapper, Disclaimer component
+- [ ] 03-02-PLAN.md — Activity feed page (/feed) with ISR, chamber/party filter controls (nuqs), FeedTable
+- [ ] 03-03-PLAN.md — Returns and volume leaderboard pages with LEGAL-01 Disclaimer banner
+- [ ] 03-04-PLAN.md — Politician profile pages with PoliticianMetrics cards and TanStack sortable/filterable TradeTable
+- [ ] 03-05-PLAN.md — Ticker pages with TickerTradesTable and TradingTimeline area chart (Recharts)
 
 ### Phase 4: Search and Discoverability
 **Goal**: Visitors can find any Congress member or stock through autocomplete search, and every page state has a stable URL that can be linked and shared — making the site useful to journalists and findable via search engines.
