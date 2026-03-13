@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Make congressional trading data so clear, current, and compelling that it becomes the go-to reference for anyone asking "what is Congress buying?"
-**Current focus:** Phase 2 — API Layer
+**Current focus:** Phase 3 — Frontend Core
 
 ## Current Position
 
-Phase: 2 of 4 (API Layer) — IN PROGRESS
-Plan: 3 of 3 completed (Feed, profile, and ticker endpoints)
-Status: Phase 2 complete
-Last activity: 2026-03-13 — Phase 2 Plan 03 complete (21 tests passing, feed/profile/ticker endpoints live)
+Phase: 3 of 4 (Frontend Core) — IN PROGRESS
+Plan: 1 of 5 completed (Scaffold, types, apiFetch, ISR handler, nav, disclaimer)
+Status: Phase 3 Plan 01 complete
+Last activity: 2026-03-13 — Phase 3 Plan 01 complete (Next.js 16 scaffold, shadcn/ui, all shared infrastructure)
 
-Progress: [██████████] 50% (Phase 1 complete + Phase 2 all 3 plans complete)
+Progress: [████████████] 55% (Phase 1 + Phase 2 complete + Phase 3 Plan 01 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 5 min
-- Total execution time: 20 min
+- Total execution time: 25 min
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [██████████] 50% (Phase 1 complete + Phase 2 all 3
 |-------|-------|-------|----------|
 | 01-data-foundation | 4 | 20 min | 5 min |
 | 02-api-layer | 3 | 13 min | 4.3 min |
+| 03-frontend-core | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min
+- Last 5 plans: 5 min
 - Trend: consistent
 
 *Updated after each plan completion*
@@ -71,6 +72,10 @@ Recent decisions affecting current work:
 - [Phase 02-api-layer, Plan 03]: result.all() (not scalars()) for multi-entity JOIN queries — rows contain both Trade and Politician as tuple elements
 - [Phase 02-api-layer, Plan 03]: UUID parse in politician profile wrapped in try/except ValueError -> 422 — consistent with FastAPI validation behavior
 - [Phase 02-api-layer, Plan 03]: Ticker endpoint returns empty trades list (not 404) for unknown ticker — frontend handles gracefully
+- [Phase 03-frontend-core, Plan 01]: revalidateTag() in Next.js 16 requires second profile argument — pass 'default' for standard cache invalidation
+- [Phase 03-frontend-core, Plan 01]: All API fetches are server-side using API_URL env var (not NEXT_PUBLIC_) since no client-side data fetching
+- [Phase 03-frontend-core, Plan 01]: shadcn/ui initialized with --defaults flag (Radix Nova preset) to bypass interactive prompts in CLI context
+- [Phase 03-frontend-core, Plan 01]: Embedded .git created by create-next-app removed from frontend/ to prevent git submodule issues
 
 ### Pending Todos
 
@@ -86,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 2 complete. 21/21 passing tests. GET /feed, GET /politicians/{id}, GET /tickers/{ticker} live. Phase 2 all 3 plans done. Ready for Phase 3.
+Stopped at: Completed 03-01-PLAN.md — Next.js 16 scaffold, shadcn/ui, types, apiFetch, ISR handler, SiteNav, Disclaimer. pnpm build passes. Ready for Phase 3 Plan 02 (feed page).
 Resume file: None
