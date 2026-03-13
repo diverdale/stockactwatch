@@ -8,11 +8,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import cache as redis_cache
+from app.api.cluster import router as cluster_router
 from app.api.feed import router as feed_router
 from app.api.internal import router as internal_router
 from app.api.leaderboard import router as leaderboard_router
 from app.api.profile_ticker import router as profile_ticker_router
 from app.api.search import router as search_router
+from app.api.sectors import router as sectors_router
+from app.api.stats import router as stats_router
 from app.config import settings
 from app.db import dispose_engine
 
@@ -62,6 +65,15 @@ app.include_router(profile_ticker_router)
 
 # Mount search endpoints (requires migration 0003 — pg_trgm extension)
 app.include_router(search_router)
+
+# Mount stats endpoint (landing page)
+app.include_router(stats_router)
+
+# Mount cluster endpoint (stocks traded by multiple members)
+app.include_router(cluster_router)
+
+# Mount sector dashboard endpoints (requires migration 0005 — ticker_meta table)
+app.include_router(sectors_router)
 
 
 @app.get("/health")
