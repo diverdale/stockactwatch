@@ -39,6 +39,7 @@ Progress: [█████████████████████░] 8
 *Updated after each plan completion*
 | Phase 03-frontend-core P04 | 2 | 2 tasks | 3 files |
 | Phase 04-search-and-discoverability P01 | 1 | 2 tasks | 5 files |
+| Phase 04-search-and-discoverability PP02 | 15 | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 04-search-and-discoverability, Plan 01]: word_similarity <% operator used (not similarity()) — handles partial matches like "pelosi" -> "Nancy Pelosi"; <% uses word_similarity_threshold not full-string threshold
 - [Phase 04-search-and-discoverability, Plan 01]: ILIKE prefix for ticker search — 1-2 char tickers have no extractable trigrams so similarity() would miss them; ILIKE works for all lengths
 - [Phase 04-search-and-discoverability, Plan 01]: CREATE EXTENSION placed first in migration upgrade() — GIN index creation fails with "type gtrgm does not exist" if extension not present
+- [Phase 04-search-and-discoverability]: nuqs/server used in search-params.ts — parseAsString.withDefault not available in client nuqs server render context
+- [Phase 04-search-and-discoverability]: Route Handler proxy pattern: client components fetch /api/search, Next.js server proxies to FastAPI — server-only API_URL never exposed to browser
 
 ### Pending Todos
 
