@@ -7,6 +7,7 @@ GET /sectors/{slug}     — detail for a single sector with top tickers, politic
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -35,6 +36,7 @@ class SectorEntry(BaseModel):
     sell_count: int
     sentiment: str  # "bullish" | "bearish" | "mixed"
     last_trade_date: str | None
+    is_trending: bool = False
 
 
 class SectorOverviewResponse(BaseModel):
@@ -92,6 +94,12 @@ def _net_sentiment(buy_count: int, sell_count: int) -> str:
     return "mixed"
 
 
+def _is_trending(count_30d: int, count_90d: int) -> bool:
+    """True when 30d activity > 2x the 90d monthly average."""
+    monthly_avg_90d = count_90d / 3.0
+    return monthly_avg_90d > 0 and count_30d > 2 * monthly_avg_90d
+
+
 # ---------------------------------------------------------------------------
 # Router
 # ---------------------------------------------------------------------------
@@ -126,6 +134,12 @@ async def get_sectors_overview(
                 case((Trade.transaction_type.ilike("%sale%"), Trade.id))
             ).label("sell_count"),
             func.max(Trade.trade_date).label("last_trade_date"),
+            func.count(
+                case((Trade.trade_date >= (date.today() - timedelta(days=30)), Trade.id))
+            ).label("count_30d"),
+            func.count(
+                case((Trade.trade_date >= (date.today() - timedelta(days=90)), Trade.id))
+            ).label("count_90d"),
         )
         .join(TickerMeta, TickerMeta.ticker == Trade.ticker)
         .where(TickerMeta.sector.is_not(None))
@@ -142,6 +156,7 @@ async def get_sectors_overview(
             sell_count=row.sell_count,
             sentiment=_net_sentiment(row.buy_count, row.sell_count),
             last_trade_date=str(row.last_trade_date) if row.last_trade_date else None,
+            is_trending=_is_trending(row.count_30d, row.count_90d),
         )
         for row in rows
     ]
