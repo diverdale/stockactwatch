@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Data Foundation** - Ingestion pipeline fetches, normalizes, and stores real congressional trade data with correct returns calculations
 - [ ] **Phase 2: API Layer** - All REST endpoints serving real data with Redis caching; leaderboard shape locked before frontend work begins
 - [ ] **Phase 3: Frontend Core** - All browse pages rendering real data: activity feed, politician profiles, ticker pages, and leaderboards with legal disclaimers
-- [ ] **Phase 4: Search and Discoverability** - Politician and ticker autocomplete search plus canonical permalink URLs for every page state
+- [x] **Phase 4: Search and Discoverability** - Politician and ticker autocomplete search plus canonical permalink URLs for every page state (completed 2026-03-13)
 
 ## Phase Details
 
@@ -96,4 +96,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Data Foundation | 4/4 | Complete | 2026-03-12 |
 | 2. API Layer | 3/3 | Complete | 2026-03-13 |
 | 3. Frontend Core | 5/5 | Complete | 2026-03-13 |
-| 4. Search and Discoverability | 0/2 | Not started | - |
+| 4. Search and Discoverability | 0/2 | Complete    | 2026-03-13 |
