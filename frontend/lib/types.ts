@@ -115,6 +115,7 @@ export interface SectorEntry {
   sell_count: number
   sentiment: 'bullish' | 'bearish' | 'mixed'
   last_trade_date: string | null
+  is_trending: boolean
 }
 
 export interface SectorOverviewResponse {
@@ -168,5 +169,47 @@ export interface PoliticianSectorEntry {
 export interface PoliticianSectorsResponse {
   politician_id: string
   sectors: PoliticianSectorEntry[]
+  cached: boolean
+}
+
+// Phase 6 additions
+export interface IndustryEntry {
+  industry: string
+  total_trades: number
+  buy_count: number
+  sell_count: number
+}
+
+export interface IndustryBreakdownResponse {
+  sector: string
+  sector_slug: string
+  industries: IndustryEntry[]
+  cached: boolean
+}
+
+export interface SectorTrade {
+  trade_id: string
+  politician_id: string
+  full_name: string
+  chamber: string | null
+  party: string | null
+  state: string | null
+  ticker: string
+  company_name: string | null
+  asset_type: string
+  transaction_type: string
+  trade_date: string
+  disclosure_date: string
+  amount_range_raw: string
+  amount_lower: number | null
+  amount_upper: number | null
+  price_at_trade: number | null
+}
+
+export interface SectorTradesResponse {
+  sector: string
+  sector_slug: string
+  trades: SectorTrade[]
+  total: number
   cached: boolean
 }

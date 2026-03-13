@@ -3,7 +3,6 @@ import { apiFetch } from '@/lib/api'
 import type { SectorOverviewResponse } from '@/lib/types'
 
 export const revalidate = 600
-export const dynamic = 'force-static'
 
 export function generateMetadata() {
   return {
@@ -56,6 +55,11 @@ export default async function SectorsPage() {
                     >
                       {sector.sentiment}
                     </span>
+                    {sector.is_trending && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                        trending
+                      </span>
+                    )}
                     <span className="text-sm text-muted-foreground">
                       {sector.total_trades.toLocaleString()} trades
                     </span>
