@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Make congressional trading data so clear, current, and compelling that it becomes the go-to reference for anyone asking "what is Congress buying?"
-**Current focus:** Phase 4 — Search and Discoverability
+**Current focus:** Phase 5 — Sector Dashboard
 
 ## Current Position
 
-Phase: 4 of 4 (Search and Discoverability) — COMPLETE
-Plan: 2 of 2 completed (frontend autocomplete + canonical URLs — human verified)
-Status: All phases complete
-Last activity: 2026-03-13 — Phase 4 Plan 02 complete (SearchCombobox, /api/search Route Handler, generateMetadata with alternates.canonical on all five page types — verified)
+Phase: 5 of 5 (Sector Dashboard) — IN PROGRESS
+Plan: 1 of N completed (ticker_meta migration and sector enrichment pipeline)
+Status: Phase 5 Plan 01 complete
+Last activity: 2026-03-13 — Phase 5 Plan 01 complete (migration 0005 ticker_meta table, TickerMeta ORM model, fetch_and_store_ticker_meta wired into all 3 pipeline entry points)
 
-Progress: [██████████████████████] 100% (All phases complete)
+Progress: [████████████████████  ] 90% (Phase 5 in progress)
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [██████████████████████] 1
 | Phase 03-frontend-core P04 | 2 | 2 tasks | 3 files |
 | Phase 04-search-and-discoverability P01 | 1 | 2 tasks | 5 files |
 | Phase 04-search-and-discoverability P02 | 15 | 3 tasks | 13 files |
+| Phase 05-sector-dashboard P01 | 1 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 04-search-and-discoverability]: nuqs/server used in search-params.ts — parseAsString.withDefault not available in client nuqs server render context
 - [Phase 04-search-and-discoverability]: Route Handler proxy pattern: client components fetch /api/search, Next.js server proxies to FastAPI — server-only API_URL never exposed to browser
 - [Phase 04-search-and-discoverability, Plan 02]: PopoverTrigger rendered without asChild — base-ui PopoverPrimitive.Trigger has no asChild prop (unlike Radix); trigger styled directly with Tailwind classes
+- [Phase 05-sector-dashboard, Plan 01]: trades.ticker widened from varchar(10) to varchar(20) in migration 0005 — option tickers can exceed 10 chars; ALTER included in same migration as ticker_meta creation
+- [Phase 05-sector-dashboard, Plan 01]: sector_slug derived via Python slugify() in fetch_and_store_ticker_meta — avoids GENERATED ALWAYS AS complexity and keeps slug logic portable
+- [Phase 05-sector-dashboard, Plan 01]: ETFs and options stored with sector=NULL in ticker_meta (not skipped) — ticker_meta row presence is required for all sector API queries regardless of equity type
 - [Phase 04-search-and-discoverability, Plan 02]: feed page uses static metadata export — canonical is /feed regardless of filter state; filter state is transient pagination concern not SEO-relevant page identity
 
 ### Pending Todos
@@ -112,5 +116,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 04-02-PLAN.md — SearchCombobox, /api/search Route Handler proxy, canonical URLs on all five page types. Human verification approved. All phases complete.
+Stopped at: Completed 05-01-PLAN.md — migration 0005, TickerMeta ORM model, fetch_and_store_ticker_meta in prices.py, wired into all 3 pipeline entry points.
 Resume file: None
