@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 02-api-layer, Plan 03]: result.all() (not scalars()) for multi-entity JOIN queries — rows contain both Trade and Politician as tuple elements
 - [Phase 02-api-layer, Plan 03]: UUID parse in politician profile wrapped in try/except ValueError -> 422 — consistent with FastAPI validation behavior
 - [Phase 02-api-layer, Plan 03]: Ticker endpoint returns empty trades list (not 404) for unknown ticker — frontend handles gracefully
+- [Phase 03-frontend-core, Plan 02]: NuqsAdapter wraps body children in app/layout.tsx — required for nuqs useQueryState hooks in App Router
+- [Phase 03-frontend-core, Plan 02]: Chamber/party params forwarded to apiFetch; backend ignores them until Phase 4 extension adds support to GET /feed
+- [Phase 03-frontend-core, Plan 02]: Date range filtering not implemented — backend GET /feed does not accept date_from/date_to in this phase
 - [Phase 03-frontend-core, Plan 01]: revalidateTag() in Next.js 16 requires second profile argument — pass 'default' for standard cache invalidation
 - [Phase 03-frontend-core, Plan 01]: All API fetches are server-side using API_URL env var (not NEXT_PUBLIC_) since no client-side data fetching
 - [Phase 03-frontend-core, Plan 01]: shadcn/ui initialized with --defaults flag (Radix Nova preset) to bypass interactive prompts in CLI context
@@ -81,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 03-frontend-core, Plan 05]: Ticker uppercased server-side before API call — normalizes /tickers/aapl and /tickers/AAPL to same backend request
 - [Phase 03-frontend-core, Plan 03]: LEGAL-01 satisfied by rendering Disclaimer above table in page files, not per-row in table components
 - [Phase 03-frontend-core, Plan 03]: ISR cache tags 'leaderboard-returns' and 'leaderboard-volume' match /api/revalidate/route.ts allowed set for on-demand invalidation
+- [Phase 03-frontend-core]: Disclaimer renders between profile header and PoliticianMetrics to satisfy LEGAL-01 on all analysis pages
+- [Phase 03-frontend-core]: PROF-04 committee assignments note as informational text in header — full data requires ProPublica integration (Phase 6 v2 concern)
+- [Phase 03-frontend-core]: Options trades identified by return_calculable === false (not asset_type check) — consistent with Phase 1 TradeIn schema-level enforcement
 
 ### Pending Todos
 
@@ -96,5 +102,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 03-05-PLAN.md — /tickers/[ticker] page with TickerTradesTable, TradingTimeline Recharts area chart, LEGAL-01 Disclaimer, ISR. Phase 3 complete.
+Stopped at: Completed 03-02-PLAN.md — feed page (app/feed/page.tsx), FeedTable, FeedFilters with nuqs v2, NuqsAdapter in root layout. Phase 3 Plan 02 SUMMARY.md created.
 Resume file: None
