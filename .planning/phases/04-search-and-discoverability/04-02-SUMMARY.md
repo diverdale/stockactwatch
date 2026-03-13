@@ -140,10 +140,20 @@ Each task was committed atomically:
 ## User Setup Required
 None - no external service configuration required.
 
+## Checkpoint Verification
+
+**Task 3: Verify search autocomplete and canonical URLs — APPROVED**
+
+Human verified on 2026-03-13:
+- Search autocomplete works: typing in nav combobox shows politician and ticker suggestions within ~300ms
+- Selecting a result navigates to the correct URL (/politicians/{id} or /tickers/{ticker})
+- Canonical URLs confirmed in page source for all five page types
+- Network requests confirmed going to /api/search Route Handler (not directly to FastAPI)
+
 ## Next Phase Readiness
-- Frontend search and discoverability complete pending human verification (Task 3 checkpoint)
-- Phase 4 Plan 02 completes the project's final phase once verification passes
+- Phase 4 Search and Discoverability complete — all plans (04-01, 04-02) delivered
 - Full stack ready: FastAPI search endpoints (04-01) + frontend combobox + Route Handler proxy + canonical URLs
+- All four phases of the project are now complete
 
 ---
 *Phase: 04-search-and-discoverability*

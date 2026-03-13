@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 
 ## Current Position
 
-Phase: 4 of 4 (Search and Discoverability) — IN PROGRESS
-Plan: 1 of 2 completed (pg_trgm search endpoints + feed filtering)
-Status: Phase 4 Plan 01 complete
-Last activity: 2026-03-13 — Phase 4 Plan 01 complete (GET /search/politicians, GET /search/tickers, feed chamber/party filtering, Redis 30s TTL, migration 0003)
+Phase: 4 of 4 (Search and Discoverability) — COMPLETE
+Plan: 2 of 2 completed (frontend autocomplete + canonical URLs — human verified)
+Status: All phases complete
+Last activity: 2026-03-13 — Phase 4 Plan 02 complete (SearchCombobox, /api/search Route Handler, generateMetadata with alternates.canonical on all five page types — verified)
 
-Progress: [█████████████████████░] 81% (Phase 1 + Phase 2 + Phase 3 complete + Phase 4 Plan 01 complete)
+Progress: [██████████████████████] 100% (All phases complete)
 
 ## Performance Metrics
 
@@ -39,7 +39,7 @@ Progress: [█████████████████████░] 8
 *Updated after each plan completion*
 | Phase 03-frontend-core P04 | 2 | 2 tasks | 3 files |
 | Phase 04-search-and-discoverability P01 | 1 | 2 tasks | 5 files |
-| Phase 04-search-and-discoverability PP02 | 15 | 2 tasks | 13 files |
+| Phase 04-search-and-discoverability P02 | 15 | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -95,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 04-search-and-discoverability, Plan 01]: CREATE EXTENSION placed first in migration upgrade() — GIN index creation fails with "type gtrgm does not exist" if extension not present
 - [Phase 04-search-and-discoverability]: nuqs/server used in search-params.ts — parseAsString.withDefault not available in client nuqs server render context
 - [Phase 04-search-and-discoverability]: Route Handler proxy pattern: client components fetch /api/search, Next.js server proxies to FastAPI — server-only API_URL never exposed to browser
+- [Phase 04-search-and-discoverability, Plan 02]: PopoverTrigger rendered without asChild — base-ui PopoverPrimitive.Trigger has no asChild prop (unlike Radix); trigger styled directly with Tailwind classes
+- [Phase 04-search-and-discoverability, Plan 02]: feed page uses static metadata export — canonical is /feed regardless of filter state; filter state is transient pagination concern not SEO-relevant page identity
 
 ### Pending Todos
 
@@ -110,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 04-01-PLAN.md — GET /search/politicians (pg_trgm word_similarity), GET /search/tickers (ILIKE prefix), Redis 30s TTL caching, feed chamber/party WHERE filtering, migration 0003.
+Stopped at: Completed 04-02-PLAN.md — SearchCombobox, /api/search Route Handler proxy, canonical URLs on all five page types. Human verification approved. All phases complete.
 Resume file: None

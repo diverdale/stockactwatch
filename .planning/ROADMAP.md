@@ -80,11 +80,11 @@ Plans:
   1. A visitor can type a Congress member's name into the search box and see autocomplete suggestions; selecting one navigates to that member's profile page
   2. A visitor can type a ticker symbol or company name into the search box and see autocomplete suggestions; selecting one navigates to that ticker's page
   3. Every leaderboard filter state, politician profile, and ticker page has a canonical URL that, when opened in a new tab, renders the same content — links shared by journalists resolve correctly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: FastAPI full-text search endpoints (politician and ticker) with GIN index
-- [ ] 04-02: Frontend autocomplete components and canonical URL structure
+- [ ] 04-01-PLAN.md — Alembic migration (pg_trgm + GIN indexes), FastAPI search endpoints (/search/politicians, /search/tickers), feed chamber/party filtering
+- [ ] 04-02-PLAN.md — Next.js Route Handler proxy, SearchCombobox in site nav, canonical metadata on all five page types
 
 ## Progress
 
@@ -93,7 +93,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 0/4 | Not started | - |
-| 2. API Layer | 0/3 | Not started | - |
-| 3. Frontend Core | 0/5 | Not started | - |
+| 1. Data Foundation | 4/4 | Complete | 2026-03-12 |
+| 2. API Layer | 3/3 | Complete | 2026-03-13 |
+| 3. Frontend Core | 5/5 | Complete | 2026-03-13 |
 | 4. Search and Discoverability | 0/2 | Not started | - |
