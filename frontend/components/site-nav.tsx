@@ -1,5 +1,6 @@
 // components/site-nav.tsx
 import Link from 'next/link'
+import { SearchCombobox } from '@/components/search-combobox'
 
 const links = [
   { href: '/feed', label: 'Activity Feed' },
@@ -24,6 +25,9 @@ export function SiteNav() {
               {link.label}
             </Link>
           ))}
+        </div>
+        <div className="ml-auto">
+          <SearchCombobox />
         </div>
       </div>
     </nav>
