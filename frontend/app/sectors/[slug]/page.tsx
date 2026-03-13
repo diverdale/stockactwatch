@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
-import type { SectorDetailResponse } from '@/lib/types'
+import type { SectorDetailResponse, IndustryBreakdownResponse } from '@/lib/types'
 import { SectorTrendChart } from './sector-trend-chart'
+import { SectorIndustryBreakdown } from '@/components/sector-industry-breakdown'
+import { SectorCsvExport } from '@/components/sector-csv-export'
 
 export const revalidate = 600
-export const dynamic = 'force-static'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -33,6 +34,16 @@ export default async function SectorDetailPage({ params }: Props) {
     notFound()
   }
 
+  let industriesData: IndustryBreakdownResponse | null = null
+  try {
+    industriesData = await apiFetch<IndustryBreakdownResponse>(`/sectors/${slug}/industries`, {
+      tags: [`sector-industries-${slug}`],
+      revalidate: 600,
+    })
+  } catch {
+    // industries endpoint optional — page renders without it
+  }
+
   const sentimentColor =
     data.sentiment === 'bullish'
       ? 'bg-emerald-100 text-emerald-800'
@@ -58,6 +69,9 @@ export default async function SectorDetailPage({ params }: Props) {
           <span className="text-emerald-600">{data.buy_count} buys</span>
           <span className="text-red-500">{data.sell_count} sells</span>
         </div>
+        <div className="mt-3">
+          <SectorCsvExport slug={slug} />
+        </div>
       </div>
 
       {/* Trend Chart */}
@@ -65,6 +79,14 @@ export default async function SectorDetailPage({ params }: Props) {
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">Trading Activity Over Time</h2>
           <SectorTrendChart trend={data.trend} />
+        </section>
+      )}
+
+      {/* Industry Breakdown */}
+      {industriesData && industriesData.industries.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Industry Breakdown</h2>
+          <SectorIndustryBreakdown industries={industriesData.industries} />
         </section>
       )}
 
