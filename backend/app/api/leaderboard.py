@@ -6,14 +6,17 @@ GET /leaderboard/volume   — politicians ranked by trade count (filterable)
 """
 from __future__ import annotations
 
+import json
 from datetime import date, timedelta
 from enum import Enum
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache import get_redis
 from app.db import get_db
 from app.models.computed_return import ComputedReturn
 from app.models.politician import Politician
@@ -149,7 +152,18 @@ router = APIRouter(prefix="/leaderboard", tags=["leaderboard"])
 async def get_returns_leaderboard(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
 ) -> LeaderboardResponse:
+    cache_key = returns_cache_key(limit)
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return LeaderboardResponse(
+            entries=[ReturnLeaderboardEntry(**e) for e in data],
+            total=len(data),
+            cached=True,
+        )
+
     rows = await query_returns_leaderboard(db, limit)
     entries = [
         ReturnLeaderboardEntry(
@@ -164,6 +178,8 @@ async def get_returns_leaderboard(
         )
         for row in rows
     ]
+    payload = [e.model_dump() for e in entries]
+    await redis.setex(cache_key, 300, json.dumps(payload, default=str))
     return LeaderboardResponse(entries=entries, total=len(entries), cached=False)
 
 
@@ -174,7 +190,24 @@ async def get_volume_leaderboard(
     period: Annotated[TimePeriod, Query()] = TimePeriod.all_time,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
 ) -> VolumeLeaderboardResponse:
+    cache_key = volume_cache_key(
+        chamber.value if chamber else None,
+        party.value if party else None,
+        period.value,
+        limit,
+    )
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return VolumeLeaderboardResponse(
+            entries=[VolumeLeaderboardEntry(**e) for e in data],
+            total=len(data),
+            cached=True,
+            filters_applied={"chamber": chamber, "party": party, "period": period, "limit": limit},
+        )
+
     rows = await query_volume_leaderboard(
         db,
         chamber.value if chamber else None,
@@ -192,6 +225,8 @@ async def get_volume_leaderboard(
         )
         for row in rows
     ]
+    payload = [e.model_dump() for e in entries]
+    await redis.setex(cache_key, 300, json.dumps(payload, default=str))
     return VolumeLeaderboardResponse(
         entries=entries,
         total=len(entries),
