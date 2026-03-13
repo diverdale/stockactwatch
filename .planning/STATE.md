@@ -43,6 +43,7 @@ Progress: [██████████████████████] 1
 | Phase 05-sector-dashboard P01 | 1 | 2 tasks | 4 files |
 | Phase 05-sector-dashboard P02 | 3 | 2 tasks | 3 files |
 | Phase 05-sector-dashboard P03 | 1 | 2 tasks | 4 files |
+| Phase 06-sector-depth P01 | 8 | 2 tasks | 1 files |
 | Phase 06-sector-depth P03 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 05-sector-dashboard]: params in Next.js 16 dynamic routes is a Promise — await params before destructuring slug
 - [Phase 05-sector-dashboard]: apiFetch second arg uses { tags, revalidate } shape (not { next: { revalidate, tags } }) — matched existing project pattern
 - [Phase 05-sector-dashboard]: Raw ResponsiveContainer from recharts used directly in sector-trend-chart — project has no shadcn ChartContainer wrapper
+- [Phase 06-sector-depth, Plan 01]: is_trending: bool = False default on SectorEntry — existing Redis-cached payloads without the field deserialize without validation errors on deploy
+- [Phase 06-sector-depth, Plan 01]: count_30d and count_90d added as SQL aggregations in the overview SELECT — no separate query needed for trending computation
+- [Phase 06-sector-depth, Plan 01]: /{slug}/industries and /{slug}/trades registered before /{slug} catch-all — FastAPI matches routes in registration order, sub-paths must come first
 - [Phase 06-sector-depth, Plan 03]: profile_ticker router has no prefix — GET /politicians/{id}/sectors registered directly on router without prefix
 - [Phase 06-sector-depth, Plan 03]: Sector fetch in page.tsx wrapped in try/catch — sector radar is additive, profile page renders without it on fetch failure
 - [Phase 06-sector-depth, Plan 03]: PoliticianDashboard unchanged — PoliticianSectorRadar rendered as additive wrapper in page.tsx only
@@ -127,5 +131,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 06-03-PLAN.md — GET /politicians/{id}/sectors endpoint + PoliticianSectorRadar component with Recharts RadarChart on politician profile pages.
+Stopped at: Completed 06-01-PLAN.md — GET /sectors/{slug}/industries, GET /sectors/{slug}/trades, is_trending on SectorEntry. Phase 6 Plan 01 complete (executed retroactively after Plans 02/03).
 Resume file: None
