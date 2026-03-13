@@ -7,8 +7,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app import cache as redis_cache
 from app.api.internal import router as internal_router
 from app.api.leaderboard import router as leaderboard_router
+from app.config import settings
 from app.db import dispose_engine
 
 
@@ -22,9 +24,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     register_jobs(scheduler)
     scheduler.start()
 
+    redis_cache._pool = redis_cache.create_pool(settings.REDIS_URL)
+
     yield
 
     scheduler.shutdown(wait=False)
+    if redis_cache._pool:
+        await redis_cache._pool.aclose()
     await dispose_engine()
 
 
