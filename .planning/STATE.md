@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 ## Current Position
 
 Phase: 3 of 4 (Frontend Core) — IN PROGRESS
-Plan: 1 of 5 completed (Scaffold, types, apiFetch, ISR handler, nav, disclaimer)
-Status: Phase 3 Plan 01 complete
-Last activity: 2026-03-13 — Phase 3 Plan 01 complete (Next.js 16 scaffold, shadcn/ui, all shared infrastructure)
+Plan: 3 of 5 completed (Scaffold + feed page + leaderboard pages)
+Status: Phase 3 Plan 03 complete
+Last activity: 2026-03-13 — Phase 3 Plan 03 complete (returns and volume leaderboard pages with ISR, LEGAL-01 Disclaimer)
 
-Progress: [████████████] 55% (Phase 1 + Phase 2 complete + Phase 3 Plan 01 complete)
+Progress: [█████████████████] 62% (Phase 1 + Phase 2 complete + Phase 3 Plans 01-03 complete)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [████████████] 55% (Phase 1 + Phase 2 complete
 |-------|-------|-------|----------|
 | 01-data-foundation | 4 | 20 min | 5 min |
 | 02-api-layer | 3 | 13 min | 4.3 min |
-| 03-frontend-core | 1 | 5 min | 5 min |
+| 03-frontend-core | 3 | 7 min | 2.3 min |
 
 **Recent Trend:**
 - Last 5 plans: 5 min
@@ -76,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 03-frontend-core, Plan 01]: All API fetches are server-side using API_URL env var (not NEXT_PUBLIC_) since no client-side data fetching
 - [Phase 03-frontend-core, Plan 01]: shadcn/ui initialized with --defaults flag (Radix Nova preset) to bypass interactive prompts in CLI context
 - [Phase 03-frontend-core, Plan 01]: Embedded .git created by create-next-app removed from frontend/ to prevent git submodule issues
+- [Phase 03-frontend-core, Plan 03]: LEGAL-01 satisfied by rendering Disclaimer above table in page files, not per-row in table components
+- [Phase 03-frontend-core, Plan 03]: ISR cache tags 'leaderboard-returns' and 'leaderboard-volume' match /api/revalidate/route.ts allowed set for on-demand invalidation
 
 ### Pending Todos
 
@@ -91,5 +93,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 03-01-PLAN.md — Next.js 16 scaffold, shadcn/ui, types, apiFetch, ISR handler, SiteNav, Disclaimer. pnpm build passes. Ready for Phase 3 Plan 02 (feed page).
+Stopped at: Completed 03-03-PLAN.md — Returns and volume leaderboard pages with ISR, cache tags, LEGAL-01 Disclaimer. Ready for Phase 3 Plan 04.
 Resume file: None
