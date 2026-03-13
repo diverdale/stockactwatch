@@ -45,6 +45,7 @@ Progress: [██████████████████████] 1
 | Phase 05-sector-dashboard P03 | 1 | 2 tasks | 4 files |
 | Phase 06-sector-depth P01 | 8 | 2 tasks | 1 files |
 | Phase 06-sector-depth P03 | 2 | 2 tasks | 4 files |
+| Phase 06-sector-depth P02 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Recent decisions affecting current work:
 - [Phase 06-sector-depth, Plan 03]: profile_ticker router has no prefix — GET /politicians/{id}/sectors registered directly on router without prefix
 - [Phase 06-sector-depth, Plan 03]: Sector fetch in page.tsx wrapped in try/catch — sector radar is additive, profile page renders without it on fetch failure
 - [Phase 06-sector-depth, Plan 03]: PoliticianDashboard unchanged — PoliticianSectorRadar rendered as additive wrapper in page.tsx only
+- [Phase 06-sector-depth]: SectorCsvExport fetches /api/sectors/[slug]/trades proxy Route Handler — client components cannot access server-only API_URL env var
+- [Phase 06-sector-depth]: Industries fetch in sector detail page wrapped in try/catch — breakdown is additive, page renders without it on fetch failure
 
 ### Pending Todos
 
