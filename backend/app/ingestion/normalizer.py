@@ -2,11 +2,12 @@
 Quiver Quantitative API response normalizer.
 
 This is the ONLY module in the codebase that knows Quiver vendor field names.
-All external field names (Representative, TransactionDate, DisclosureDate, etc.)
+All external field names (Representative, TransactionDate, ReportDate, etc.)
 are contained here and must not leak into business logic.
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 from datetime import date
 
@@ -63,29 +64,42 @@ def normalize_quiver_trade(raw: dict) -> TradeIn:
     This function is the sole boundary between Quiver vendor field names
     and the application's internal domain model.
 
-    Quiver field mapping:
-      TransactionID       -> external_id
+    Actual Quiver field mapping (verified against live API 2026-03-13):
       Representative      -> politician_name
+      BioGuideID          -> used in external_id generation
       Ticker              -> ticker
-      AssetDescription    -> asset_type (classified)
+      TickerType + Description -> asset_type (classified)
       Transaction         -> transaction_type
       TransactionDate     -> trade_date        (INGEST-05: NOT disclosure_date)
-      DisclosureDate      -> disclosure_date   (INGEST-05: NOT trade_date)
+      ReportDate          -> disclosure_date   (INGEST-05: NOT trade_date)
       Range               -> amount_range_raw, amount_lower, amount_upper
-      Owner               -> owner (default "Self")
+      (no Owner field)    -> owner defaults to "Self"
+
+    Note: Quiver has no stable TransactionID field. external_id is a deterministic
+    MD5 hash of (BioGuideID, TransactionDate, Ticker, Range) to ensure idempotent upserts.
     """
-    asset_type = _classify_asset_type(raw.get("AssetDescription", ""))
+    # Classify asset type from TickerType and Description.
+    # TickerType "ST" / "Stock" = equity; Description may contain "call"/"put"/"option".
+    description = raw.get("Description") or ""
+    ticker_type = raw.get("TickerType", "")
+    asset_type = _classify_asset_type(f"{description} {ticker_type}")
+
     amount_range_raw = raw.get("Range", "")
     amount_lower, amount_upper = parse_amount_range(amount_range_raw)
 
+    # Deterministic external_id — Quiver has no stable trade ID field.
+    bio_guide_id = raw.get("BioGuideID", raw.get("Representative", ""))
+    id_source = f"{bio_guide_id}|{raw.get('TransactionDate', '')}|{raw.get('Ticker', '')}|{amount_range_raw}"
+    external_id = hashlib.md5(id_source.encode()).hexdigest()
+
     return TradeIn(
-        external_id=raw["TransactionID"],
+        external_id=external_id,
         politician_name=raw["Representative"],
         ticker=raw["Ticker"],
         asset_type=asset_type,
         transaction_type=raw["Transaction"],
-        trade_date=date.fromisoformat(raw["TransactionDate"]),      # INGEST-05
-        disclosure_date=date.fromisoformat(raw["DisclosureDate"]),  # INGEST-05
+        trade_date=date.fromisoformat(raw["TransactionDate"]),   # INGEST-05
+        disclosure_date=date.fromisoformat(raw["ReportDate"]),   # INGEST-05 (Quiver: ReportDate)
         amount_range_raw=amount_range_raw,
         amount_lower=amount_lower,
         amount_upper=amount_upper,

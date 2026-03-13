@@ -192,9 +192,16 @@ async def upsert_trades_batch(session: AsyncSession, trades: list[dict]) -> int:
     if not trades:
         return 0
 
+    # Deduplicate by external_id — PostgreSQL ON CONFLICT DO UPDATE raises
+    # CardinalityViolationError if two rows in the same statement share a conflict key.
+    seen: dict[str, dict] = {}
+    for t in trades:
+        seen[t["external_id"]] = t
+    deduped = list(seen.values())
+
     total = 0
-    for i in range(0, len(trades), BATCH_SIZE):
-        chunk = trades[i : i + BATCH_SIZE]
+    for i in range(0, len(deduped), BATCH_SIZE):
+        chunk = deduped[i : i + BATCH_SIZE]
         stmt = pg_insert(Trade).values(chunk)
         stmt = stmt.on_conflict_do_update(
             index_elements=["external_id"],
@@ -215,7 +222,7 @@ async def upsert_trades_batch(session: AsyncSession, trades: list[dict]) -> int:
         total += len(chunk)
 
     await session.commit()
-    return total
+    return total  # count of deduped rows processed
 
 
 async def _upsert_politician(
