@@ -5,6 +5,16 @@ import type { SectorOverviewResponse } from '@/lib/types'
 export const revalidate = 600
 export const dynamic = 'force-static'
 
+export function generateMetadata() {
+  return {
+    title: 'Sector Activity | Congressional Stock Tracker',
+    description: 'Congressional trading activity grouped by market sector — see which sectors are being bought or sold.',
+    alternates: {
+      canonical: '/sectors',
+    },
+  }
+}
+
 export default async function SectorsPage() {
   const data = await apiFetch<SectorOverviewResponse>('/sectors', {
     tags: ['sectors-overview'],
