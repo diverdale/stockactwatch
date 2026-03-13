@@ -12,6 +12,7 @@ from app.api.feed import router as feed_router
 from app.api.internal import router as internal_router
 from app.api.leaderboard import router as leaderboard_router
 from app.api.profile_ticker import router as profile_ticker_router
+from app.api.search import router as search_router
 from app.config import settings
 from app.db import dispose_engine
 
@@ -58,6 +59,9 @@ app.include_router(feed_router)
 
 # Mount politician profile and ticker endpoints
 app.include_router(profile_ticker_router)
+
+# Mount search endpoints (requires migration 0003 — pg_trgm extension)
+app.include_router(search_router)
 
 
 @app.get("/health")
