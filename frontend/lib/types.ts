@@ -158,3 +158,15 @@ export interface SectorDetailResponse {
   trend: SectorTrendPoint[]
   cached: boolean
 }
+
+export interface PoliticianSectorEntry {
+  sector: string
+  sector_slug: string
+  trade_count: number
+}
+
+export interface PoliticianSectorsResponse {
+  politician_id: string
+  sectors: PoliticianSectorEntry[]
+  cached: boolean
+}

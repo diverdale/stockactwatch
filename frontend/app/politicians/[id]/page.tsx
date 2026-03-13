@@ -1,13 +1,11 @@
 // app/politicians/[id]/page.tsx
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Disclaimer } from '@/components/disclaimer'
-import { PoliticianMetrics } from '@/components/politician-metrics'
-import { TradeTable } from '@/components/trade-table'
+import { PoliticianDashboard } from '@/components/politician-dashboard'
+import { PoliticianSectorRadar } from '@/components/politician-sector-radar'
 import { apiFetch } from '@/lib/api'
-import type { PoliticianProfile } from '@/lib/types'
+import type { PoliticianProfile, PoliticianSectorsResponse } from '@/lib/types'
 
 export const revalidate = 3600
 
@@ -17,9 +15,17 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
-  return {
-    title: 'Congress Member Profile — Congress Trades',
-    alternates: { canonical: `/politicians/${id}` },
+  try {
+    const profile = await apiFetch<PoliticianProfile>(`/politicians/${id}`, {
+      tags: [`politician-${id}`],
+      revalidate: 3600,
+    })
+    return {
+      title: `${profile.full_name} — Congress Trades`,
+      alternates: { canonical: `/politicians/${id}` },
+    }
+  } catch {
+    return { title: 'Congress Member — Congress Trades' }
   }
 }
 
@@ -40,36 +46,26 @@ export default async function PoliticianPage({
     notFound()
   }
 
+  let sectorData: PoliticianSectorsResponse | null = null
+  try {
+    sectorData = await apiFetch<PoliticianSectorsResponse>(`/politicians/${id}/sectors`, {
+      tags: [`politician-sectors-${id}`],
+      revalidate: 3600,
+    })
+  } catch {
+    // sector radar is additive — render profile without it if fetch fails
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Profile header */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-bold">{profile.full_name}</h1>
-          <Badge variant="outline">{profile.chamber}</Badge>
-          <Badge variant="secondary">{profile.party}</Badge>
-        </div>
-        <p className="text-muted-foreground">
-          {profile.state} · {profile.total_trades} disclosed trades
-        </p>
-        <p className="text-muted-foreground text-xs">
-          Committee assignments are not available in public STOCK Act disclosure data.
-        </p>
-      </div>
-
-      {/* LEGAL-01: Disclaimer required on every analysis page showing estimated returns */}
+    <>
       <Disclaimer />
-
-      {/* Metrics */}
-      <PoliticianMetrics profile={profile} />
-
-      <Separator />
-
-      {/* Trade history */}
-      <div>
-        <h2 className="mb-4 text-xl font-semibold">Trade History</h2>
-        <TradeTable trades={profile.trades} />
-      </div>
-    </div>
+      {sectorData && sectorData.sectors.length > 0 && (
+        <div className="container mx-auto px-4 max-w-4xl mt-6 mb-2">
+          <h2 className="text-xl font-semibold mb-4">Trading Activity by Sector</h2>
+          <PoliticianSectorRadar sectors={sectorData.sectors} />
+        </div>
+      )}
+      <PoliticianDashboard profile={profile} />
+    </>
   )
 }
