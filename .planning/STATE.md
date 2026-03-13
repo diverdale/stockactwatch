@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 ## Current Position
 
 Phase: 2 of 4 (API Layer) — IN PROGRESS
-Plan: 2 of 3 completed (Redis cache-aside layer and ISR invalidation endpoint)
-Status: Phase 2 Plan 02 complete
-Last activity: 2026-03-13 — Phase 2 Plan 02 complete (21 tests passing, Redis cache-aside live)
+Plan: 3 of 3 completed (Feed, profile, and ticker endpoints)
+Status: Phase 2 complete
+Last activity: 2026-03-13 — Phase 2 Plan 03 complete (21 tests passing, feed/profile/ticker endpoints live)
 
-Progress: [████████░░] 43% (Phase 1 complete + Phase 2 Plans 01-02 complete)
+Progress: [██████████] 50% (Phase 1 complete + Phase 2 all 3 plans complete)
 
 ## Performance Metrics
 
@@ -28,10 +28,10 @@ Progress: [████████░░] 43% (Phase 1 complete + Phase 2 Plans
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-foundation | 4 | 20 min | 5 min |
-| 02-api-layer | 2 | 11 min | 5.5 min |
+| 02-api-layer | 3 | 13 min | 4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min
+- Last 5 plans: 4 min
 - Trend: consistent
 
 *Updated after each plan completion*
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 02-api-layer, Plan 02]: Redis keys deleted BEFORE Next.js ISR webhook call — prevents Next.js from re-caching stale data from a warm Redis key
 - [Phase 02-api-layer, Plan 02]: Module-level _pool pattern for Redis connection pool — simpler ownership model, pool lifecycle tied to lifespan
 - [Phase 02-api-layer, Plan 02]: json.dumps with default=str for all Redis writes — handles Decimal avg_return_pct and UUID values without custom serializers
+- [Phase 02-api-layer, Plan 03]: result.all() (not scalars()) for multi-entity JOIN queries — rows contain both Trade and Politician as tuple elements
+- [Phase 02-api-layer, Plan 03]: UUID parse in politician profile wrapped in try/except ValueError -> 422 — consistent with FastAPI validation behavior
+- [Phase 02-api-layer, Plan 03]: Ticker endpoint returns empty trades list (not 404) for unknown ticker — frontend handles gracefully
 
 ### Pending Todos
 
@@ -83,5 +86,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Phase 2 Plan 02 complete. 21/21 passing tests. Redis cache-aside live on both leaderboard endpoints. POST /internal/revalidate-isr endpoint live. Ready for Plan 02-03.
+Stopped at: Phase 2 complete. 21/21 passing tests. GET /feed, GET /politicians/{id}, GET /tickers/{ticker} live. Phase 2 all 3 plans done. Ready for Phase 3.
 Resume file: None
