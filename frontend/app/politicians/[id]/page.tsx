@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Disclaimer } from '@/components/disclaimer'
 import { PoliticianDashboard } from '@/components/politician-dashboard'
-import { PoliticianSectorRadar } from '@/components/politician-sector-radar'
 import { apiFetch } from '@/lib/api'
 import type { PoliticianProfile, PoliticianSectorsResponse } from '@/lib/types'
 
@@ -53,19 +52,16 @@ export default async function PoliticianPage({
       revalidate: 3600,
     })
   } catch {
-    // sector radar is additive — render profile without it if fetch fails
+    // sector radar is additive — render without it if fetch fails
   }
 
   return (
     <>
       <Disclaimer />
-      <PoliticianDashboard profile={profile} />
-      {sectorData && sectorData.sectors.length > 0 && (
-        <div className="container mx-auto px-4 max-w-4xl pb-10">
-          <h2 className="text-xl font-semibold mb-4">Trading Activity by Sector</h2>
-          <PoliticianSectorRadar sectors={sectorData.sectors} />
-        </div>
-      )}
+      <PoliticianDashboard
+        profile={profile}
+        sectors={sectorData?.sectors}
+      />
     </>
   )
 }

@@ -4,12 +4,13 @@ import { BarChart2 } from 'lucide-react'
 import { SearchCombobox } from '@/components/search-combobox'
 
 const links = [
-  { href: '/feed', label: 'Activity Feed' },
+  { href: '/feed', label: 'Trades' },
   { href: '/politicians', label: 'Politicians' },
-  { href: '/leaderboard/returns', label: 'Returns' },
-  { href: '/leaderboard/volume', label: 'Volume' },
+  { href: '/tickers', label: 'Tickers' },
+  { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/cluster', label: 'Clusters' },
   { href: '/sectors', label: 'Sectors' },
+  { href: '/conflicts', label: 'Conflicts' },
 ]
 
 export function SiteNav() {

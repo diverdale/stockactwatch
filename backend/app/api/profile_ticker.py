@@ -1,11 +1,12 @@
 """GET /politicians/{politician_id} and GET /tickers/{ticker} endpoints."""
 import json
 import uuid
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import case, func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache import get_redis
@@ -160,10 +161,180 @@ async def get_politician_profile(
         chamber=politician.chamber,
         party=politician.party,
         state=politician.state,
+        district=politician.district,
         bio_guide_id=bio_id,
         photo_url=photo_url,
         total_trades=len(rows),
         trades=trade_entries,
+    )
+
+
+class TickerListEntry(BaseModel):
+    ticker: str
+    company_name: str | None
+    sector: str | None
+    sector_slug: str | None
+    asset_types: list[str]
+    total_trades: int
+    buy_count: int
+    sell_count: int
+    member_count: int
+    last_trade_date: str | None
+    amount_vol_est: float | None
+    sparkline: list[int]
+
+
+class TickerListResponse(BaseModel):
+    tickers: list[TickerListEntry]
+    total_tickers: int
+    total_trades: int
+    total_members: int
+    dollar_vol_est: float
+    cached: bool
+
+
+@router.get("/tickers", response_model=TickerListResponse)
+async def get_tickers_list(
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> TickerListResponse:
+    cache_key = "tickers:list"
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        data = json.loads(cached_raw)
+        return TickerListResponse(
+            tickers=[TickerListEntry(**t) for t in data["tickers"]],
+            total_tickers=data["total_tickers"],
+            total_trades=data["total_trades"],
+            total_members=data["total_members"],
+            dollar_vol_est=data["dollar_vol_est"],
+            cached=True,
+        )
+
+    # ── 1. Main aggregation query ──────────────────────────────────────────
+    stmt = (
+        select(
+            Trade.ticker,
+            TickerInfo.company_name,
+            TickerMeta.sector,
+            TickerMeta.sector_slug,
+            func.count(Trade.id).label("total_trades"),
+            func.count(
+                case((Trade.transaction_type.ilike("%purchase%"), Trade.id))
+            ).label("buy_count"),
+            func.count(
+                case((Trade.transaction_type.ilike("%sale%"), Trade.id))
+            ).label("sell_count"),
+            func.count(func.distinct(Trade.politician_id)).label("member_count"),
+            func.max(Trade.trade_date).label("last_trade_date"),
+            func.sum(
+                (func.coalesce(Trade.amount_lower, 0) + func.coalesce(Trade.amount_upper, 0)) / 2.0
+            ).label("amount_vol_est"),
+        )
+        .outerjoin(TickerInfo, TickerInfo.ticker == Trade.ticker)
+        .outerjoin(TickerMeta, TickerMeta.ticker == Trade.ticker)
+        .group_by(Trade.ticker, TickerInfo.company_name, TickerMeta.sector, TickerMeta.sector_slug)
+        .order_by(func.count(Trade.id).desc())
+    )
+    rows = (await db.execute(stmt)).all()
+
+    # ── 2. Asset types per ticker (separate query) ─────────────────────────
+    asset_stmt = (
+        select(Trade.ticker, Trade.asset_type)
+        .distinct()
+    )
+    asset_rows = (await db.execute(asset_stmt)).all()
+    asset_types_map: dict[str, list[str]] = {}
+    for ar in asset_rows:
+        asset_types_map.setdefault(ar.ticker, []).append(ar.asset_type)
+
+    # ── 3. Sparkline: monthly trade counts for last 12 months ─────────────
+    today = date.today()
+    # Build list of 12 month start dates, oldest first
+    months: list[date] = []
+    for i in range(11, -1, -1):
+        # First day of month i months ago
+        target = today.replace(day=1) - timedelta(days=1)  # last day of prev month
+        # Roll back i months from current month
+        year = today.year
+        month = today.month - i
+        while month <= 0:
+            month += 12
+            year -= 1
+        months.append(date(year, month, 1))
+
+    sparkline_stmt = (
+        select(
+            Trade.ticker,
+            func.date_trunc(literal_column("'month'"), Trade.trade_date).label("month"),
+            func.count(Trade.id).label("cnt"),
+        )
+        .where(Trade.trade_date >= months[0])
+        .group_by(Trade.ticker, func.date_trunc(literal_column("'month'"), Trade.trade_date))
+    )
+    spark_rows = (await db.execute(sparkline_stmt)).all()
+
+    # Build dict: ticker -> {month_date: count}
+    spark_map: dict[str, dict[date, int]] = {}
+    for sr in spark_rows:
+        month_key = sr.month.date() if hasattr(sr.month, "date") else sr.month
+        spark_map.setdefault(sr.ticker, {})[month_key] = sr.cnt
+
+    # ── 4. Build response ──────────────────────────────────────────────────
+    tickers: list[TickerListEntry] = []
+    total_trades_sum = 0
+    total_vol_sum = 0.0
+    all_members: set = set()
+
+    for row in rows:
+        total_trades_sum += row.total_trades
+
+        vol = float(row.amount_vol_est) if row.amount_vol_est is not None else 0.0
+        total_vol_sum += vol
+
+        # Build 12-slot sparkline
+        ticker_spark = spark_map.get(row.ticker, {})
+        sparkline = [ticker_spark.get(m, 0) for m in months]
+
+        last_date_str = str(row.last_trade_date) if row.last_trade_date else None
+
+        tickers.append(
+            TickerListEntry(
+                ticker=row.ticker,
+                company_name=row.company_name,
+                sector=row.sector,
+                sector_slug=row.sector_slug,
+                asset_types=asset_types_map.get(row.ticker, []),
+                total_trades=row.total_trades,
+                buy_count=row.buy_count,
+                sell_count=row.sell_count,
+                member_count=row.member_count,
+                last_trade_date=last_date_str,
+                amount_vol_est=vol if vol > 0 else None,
+                sparkline=sparkline,
+            )
+        )
+
+    # total_members: distinct politicians across ALL tickers
+    members_stmt = select(func.count(func.distinct(Trade.politician_id)))
+    total_members_result = (await db.execute(members_stmt)).scalar_one()
+
+    payload = {
+        "tickers": [t.model_dump() for t in tickers],
+        "total_tickers": len(tickers),
+        "total_trades": total_trades_sum,
+        "total_members": total_members_result,
+        "dollar_vol_est": total_vol_sum,
+    }
+    await redis.setex(cache_key, 600, json.dumps(payload, default=str))
+
+    return TickerListResponse(
+        tickers=tickers,
+        total_tickers=len(tickers),
+        total_trades=total_trades_sum,
+        total_members=total_members_result,
+        dollar_vol_est=total_vol_sum,
+        cached=False,
     )
 
 

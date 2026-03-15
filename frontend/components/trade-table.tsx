@@ -41,11 +41,21 @@ const columns: ColumnDef<TradeEntry>[] = [
   {
     accessorKey: 'transaction_type',
     header: 'Type',
-    cell: ({ getValue }) => (
-      <Badge variant={getValue<string>() === 'Purchase' ? 'default' : 'secondary'}>
-        {getValue<string>()}
-      </Badge>
-    ),
+    cell: ({ getValue }) => {
+      const val = getValue<string>()
+      return (
+        <Badge
+          variant="outline"
+          className={
+            val === 'Purchase'
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
+              : 'bg-red-500/15 text-red-400 border-red-500/20'
+          }
+        >
+          {val === 'Purchase' ? 'Buy' : 'Sell'}
+        </Badge>
+      )
+    },
   },
   {
     accessorKey: 'amount_range_raw',
@@ -67,9 +77,8 @@ const columns: ColumnDef<TradeEntry>[] = [
       if (val === null) return <span className="text-muted-foreground text-sm">—</span>
       const sign = val >= 0 ? '+' : ''
       return (
-        <span className={`font-mono text-sm ${val >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {sign}
-          {val.toFixed(1)}%
+        <span className={`font-mono text-sm tabular-nums ${val >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          {sign}{val.toFixed(1)}%
         </span>
       )
     },
@@ -108,13 +117,13 @@ export function TradeTable({ trades }: TradeTableProps) {
         placeholder="Filter by ticker..."
         value={tickerFilter}
         onChange={(e) => setTickerFilter(e.target.value.toUpperCase())}
-        className="max-w-xs"
+        className="max-w-xs bg-muted/30 border-border/50 focus-visible:ring-primary/50"
       />
-      <div className="rounded-md border">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
+              <TableRow key={hg.id} className="border-b border-border/60 bg-muted/30 hover:bg-muted/30">
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -123,9 +132,9 @@ export function TradeTable({ trades }: TradeTableProps) {
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() === 'asc'
-                      ? ' \u2191'
+                      ? ' ↑'
                       : header.column.getIsSorted() === 'desc'
-                      ? ' \u2193'
+                      ? ' ↓'
                       : ''}
                   </TableHead>
                 ))}
@@ -137,14 +146,14 @@ export function TradeTable({ trades }: TradeTableProps) {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center text-muted-foreground py-8"
+                  className="text-center text-muted-foreground py-10"
                 >
                   No trades match the filter.
                 </TableCell>
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="border-b border-border/60 hover:bg-muted/20 transition-colors">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -156,7 +165,7 @@ export function TradeTable({ trades }: TradeTableProps) {
           </TableBody>
         </Table>
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-muted-foreground text-xs tabular-nums">
         {table.getRowModel().rows.length} of {trades.length} trades shown
       </p>
     </div>

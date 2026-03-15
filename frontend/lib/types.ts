@@ -47,6 +47,7 @@ export interface PoliticianProfile {
   chamber: string | null
   party: string | null
   state: string | null
+  district: number | null
   bio_guide_id: string | null
   photo_url: string | null
   total_trades: number
@@ -77,6 +78,8 @@ export interface TickerTrades {
 export interface ReturnLeaderboardEntry {
   politician_id: string
   full_name: string
+  chamber: string | null
+  party: string | null
   avg_return_pct: number
   return_low: number
   return_high: number
@@ -228,6 +231,99 @@ export interface PoliticianListEntry {
 
 export interface PoliticianListResponse {
   politicians: PoliticianListEntry[]
+  total: number
+  cached: boolean
+}
+
+export interface TickerListEntry {
+  ticker: string
+  company_name: string | null
+  sector: string | null
+  sector_slug: string | null
+  asset_types: string[]
+  total_trades: number
+  buy_count: number
+  sell_count: number
+  member_count: number
+  last_trade_date: string | null
+  amount_vol_est: number | null
+  sparkline: number[]
+}
+
+export interface TickerListResponse {
+  tickers: TickerListEntry[]
+  total_tickers: number
+  total_trades: number
+  total_members: number
+  dollar_vol_est: number
+  cached: boolean
+}
+
+// Committee conflict detector types
+export interface ConflictTrade {
+  trade_id: string
+  politician_id: string
+  full_name: string
+  chamber: string | null
+  party: string | null
+  state: string | null
+  photo_url: string | null
+  committee_name: string
+  committee_code: string
+  role: string | null
+  ticker: string
+  company_name: string | null
+  sector: string | null
+  transaction_type: string
+  trade_date: string
+  disclosure_date: string
+  amount_range_raw: string
+  amount_lower: number | null
+  amount_upper: number | null
+  conflict_reason: string
+}
+
+export interface ConflictsResponse {
+  trades: ConflictTrade[]
+  total: number
+  cached: boolean
+}
+
+export interface CommitteeScorecard {
+  committee_code: string
+  committee_name: string
+  chamber: string
+  sector: string | null
+  total_trades: number
+  buy_count: number
+  sell_count: number
+  member_count: number
+  chair_trades: number
+  ranking_member_trades: number
+  dollar_vol_est: number
+  sectors: string[]
+}
+
+export interface ConflictsSummaryResponse {
+  committees: CommitteeScorecard[]
+  total_flagged_trades: number
+  total_members_implicated: number
+  total_committees: number
+  dollar_vol_est: number
+  cached: boolean
+}
+
+export interface HearingEvent {
+  committee_code: string
+  committee_name: string
+  hearing_date: string
+  title: string | null
+  meeting_type: string | null
+  congress: number
+}
+
+export interface ConflictHearingsResponse {
+  hearings: HearingEvent[]
   total: number
   cached: boolean
 }

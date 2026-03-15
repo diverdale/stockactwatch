@@ -1,0 +1,104 @@
+################################################################################
+# Cloud Build — Build & Push Docker images for stock_tracker
+#
+# Substitution variables (set in Cloud Build trigger or pass with --substitutions):
+#   _REGION          e.g. us-central1
+#   _PROJECT_ID      e.g. my-gcp-project
+#   _BACKEND_SERVICE e.g. stock-tracker-backend
+#   _FRONTEND_SERVICE e.g. stock-tracker-frontend
+#
+# Deployment steps are commented out. Uncomment once images are validated and
+# Cloud Run services, secrets, and Cloud SQL are fully configured.
+################################################################################
+
+substitutions:
+  _REGION: us-central1
+  _PROJECT_ID: ${PROJECT_ID}
+  _BACKEND_SERVICE: stock-tracker-backend
+  _FRONTEND_SERVICE: stock-tracker-frontend
+
+steps:
+  # ── Backend ──────────────────────────────────────────────────────────────────
+
+  - id: build-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}:$COMMIT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}:latest
+      - -f
+      - backend/Dockerfile
+      - backend
+
+  - id: push-backend
+    name: gcr.io/cloud-builders/docker
+    waitFor:
+      - build-backend
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+
+  - id: build-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}:$COMMIT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}:latest
+      - -f
+      - frontend/Dockerfile
+      - frontend
+
+  - id: push-frontend
+    name: gcr.io/cloud-builders/docker
+    waitFor:
+      - build-frontend
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}
+
+  # ── Deployment (uncomment when ready) ────────────────────────────────────────
+  #
+  # Run Alembic migrations first via a Cloud Run Job, then deploy both services.
+  #
+  # - id: deploy-backend
+  #   name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  #   waitFor:
+  #     - push-backend
+  #   entrypoint: gcloud
+  #   args:
+  #     - run
+  #     - deploy
+  #     - ${_BACKEND_SERVICE}
+  #     - --image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}:$COMMIT_SHA
+  #     - --region=${_REGION}
+  #     - --platform=managed
+  #
+  # - id: deploy-frontend
+  #   name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  #   waitFor:
+  #     - push-frontend
+  #   entrypoint: gcloud
+  #   args:
+  #     - run
+  #     - deploy
+  #     - ${_FRONTEND_SERVICE}
+  #     - --image=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}:$COMMIT_SHA
+  #     - --region=${_REGION}
+  #     - --platform=managed
+
+images:
+  - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_BACKEND_SERVICE}:latest
+  - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/stock-tracker/${_FRONTEND_SERVICE}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

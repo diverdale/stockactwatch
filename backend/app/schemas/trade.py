@@ -25,6 +25,10 @@ class TradeIn(BaseModel):
 
     external_id: str
     politician_name: str
+    bio_guide_id: str | None = None
+    chamber: str | None = None
+    party: str | None = None
+    state: str | None = None
     ticker: str
     asset_type: AssetType
     transaction_type: str

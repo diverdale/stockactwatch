@@ -1,6 +1,37 @@
 .planning/
+
+# env files
+.env
 backend/.env
+frontend/.env
+frontend/.env.local
+
+# virtual env
 backend/.venv/
+
+# python cache
 backend/app/__pycache__/
 backend/**/__pycache__/
 backend/**/*.pyc
+
+# dev scripts
+dev-start.sh
+dev-stop.sh
+
+# dev scripts runtime files
+.backend.pid
+.backend.log
+.frontend.pid
+.frontend.log
+.redis.pid
+.redis.log
+
+# api tokens
+.quiver_token.txt
+
+# redis dumps
+dump.rdb
+backend/dump.rdb
+
+# local notes
+roadmap.txt

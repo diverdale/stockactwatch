@@ -1,12 +1,17 @@
 // components/disclaimer.tsx
+import { Info } from 'lucide-react'
+
 export function Disclaimer() {
   return (
     <div
       role="note"
-      className="rounded-md border border-yellow-400 bg-yellow-50 px-4 py-3 text-sm text-yellow-900 dark:border-yellow-600 dark:bg-yellow-950 dark:text-yellow-100"
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-3 border-t border-border bg-background/90 backdrop-blur-sm px-6 py-2.5 text-xs text-muted-foreground"
     >
-      <strong>Disclaimer:</strong> Data sourced from public STOCK Act disclosures. Estimated
-      returns are illustrative only and are not guaranteed. This is not financial advice.
+      <Info className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span>
+        Data from public STOCK Act disclosures. Estimated returns are illustrative only and not
+        guaranteed. Not financial advice.
+      </span>
     </div>
   )
 }

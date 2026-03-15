@@ -119,6 +119,34 @@ async def trigger_isr_revalidation(
     return {"status": "ok", "redis_keys_deleted": redis_deletes, "tags_revalidated": revalidated}
 
 
+@router.post("/internal/enrich-committees")
+async def enrich_committees(
+    x_internal_secret: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Fetch current committee memberships from unitedstates.github.io and upsert."""
+    if not hmac.compare_digest(x_internal_secret, settings.INTERNAL_SECRET):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from app.ingestion.committees import enrich_politician_committees
+
+    count = await enrich_politician_committees(db)
+    return {"status": "ok", "rows_upserted": count}
+
+
+@router.post("/internal/enrich-hearings")
+async def enrich_hearings(
+    x_internal_secret: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Fetch committee meetings/hearings from congress.gov and upsert into committee_hearings."""
+    if not hmac.compare_digest(x_internal_secret, settings.INTERNAL_SECRET):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from app.ingestion.committees import fetch_committee_hearings
+
+    count = await fetch_committee_hearings(db)
+    return {"status": "ok", "rows_upserted": count}
+
+
 @router.post("/internal/backfill-sector-meta")
 async def backfill_sector_meta(
     request: Request,

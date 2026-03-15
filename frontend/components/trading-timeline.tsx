@@ -16,7 +16,7 @@ interface TradingTimelineProps {
 const chartConfig: ChartConfig = {
   trades: {
     label: 'Trades',
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--color-chart-1)',
   },
 }
 
@@ -30,24 +30,24 @@ export function TradingTimeline({ data, ticker }: TradingTimelineProps) {
   }
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-medium text-muted-foreground">
+    <div className="space-y-3">
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         Congressional trading activity in {ticker} by month
       </h3>
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} />
+          <CartesianGrid vertical={false} stroke="hsl(var(--border) / 0.3)" />
           <XAxis
             dataKey="month"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             interval="preserveStartEnd"
           />
           <YAxis
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             allowDecimals={false}
             width={28}
           />
@@ -57,7 +57,8 @@ export function TradingTimeline({ data, ticker }: TradingTimelineProps) {
             dataKey="trades"
             fill="var(--color-trades)"
             stroke="var(--color-trades)"
-            fillOpacity={0.3}
+            fillOpacity={0.2}
+            strokeWidth={2}
           />
         </AreaChart>
       </ChartContainer>

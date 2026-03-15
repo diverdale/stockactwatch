@@ -17,7 +17,10 @@ class FeedEntry(BaseModel):
     full_name: str
     chamber: str | None
     party: str | None
+    state: str | None
+    photo_url: str | None
     ticker: str
+    company_name: str | None
     asset_type: str
     transaction_type: str
     trade_date: date
@@ -26,6 +29,7 @@ class FeedEntry(BaseModel):
     amount_lower: int | None
     amount_upper: int | None
     return_calculable: bool
+    price_at_trade: Decimal | None  # close price on trade_date from price_snapshots
 
 
 class FeedResponse(BaseModel):
@@ -58,6 +62,9 @@ class PoliticianProfile(BaseModel):
     chamber: str | None
     party: str | None
     state: str | None
+    district: int | None
+    bio_guide_id: str | None
+    photo_url: str | None
     total_trades: int
     trades: list[TradeEntry]
 
@@ -81,5 +88,6 @@ class TickerTradeEntry(BaseModel):
 
 class TickerTrades(BaseModel):
     ticker: str
+    company_name: str | None
     total_trades: int
     trades: list[TickerTradeEntry]

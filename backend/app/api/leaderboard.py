@@ -90,6 +90,8 @@ async def query_returns_leaderboard(db: AsyncSession, limit: int = 20):
         select(
             Politician.id,
             Politician.full_name,
+            Politician.chamber,
+            Politician.party,
             func.avg(ComputedReturn.return_pct).label("avg_return_pct"),
             func.min(ComputedReturn.return_pct).label("return_low"),
             func.max(ComputedReturn.return_pct).label("return_high"),
@@ -98,7 +100,7 @@ async def query_returns_leaderboard(db: AsyncSession, limit: int = 20):
         )
         .join(ComputedReturn, ComputedReturn.politician_id == Politician.id)
         .where(ComputedReturn.return_pct.is_not(None))
-        .group_by(Politician.id, Politician.full_name)
+        .group_by(Politician.id, Politician.full_name, Politician.chamber, Politician.party)
         .order_by(func.avg(ComputedReturn.return_pct).desc())
         .limit(limit)
     )
@@ -169,6 +171,8 @@ async def get_returns_leaderboard(
         ReturnLeaderboardEntry(
             politician_id=str(row.id),
             full_name=row.full_name,
+            chamber=row.chamber,
+            party=row.party,
             avg_return_pct=row.avg_return_pct,
             return_low=row.return_low,
             return_high=row.return_high,

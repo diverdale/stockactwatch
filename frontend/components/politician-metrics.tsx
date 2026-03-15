@@ -39,66 +39,72 @@ export function PoliticianMetrics({ profile }: PoliticianMetricsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-muted-foreground text-sm font-medium">Total Trades</CardTitle>
+          <CardTitle className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+            Total Trades
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{profile.total_trades}</div>
+          <div className="text-2xl font-bold tabular-nums">{profile.total_trades}</div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-muted-foreground text-sm font-medium">
+          <CardTitle className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
             Est. Avg Return
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div
-            className={`text-2xl font-bold font-mono ${
+            className={`text-2xl font-bold font-mono tabular-nums ${
               avgReturn === 'N/A'
                 ? 'text-muted-foreground text-base'
                 : avgReturn.startsWith('+')
-                ? 'text-green-600'
-                : 'text-red-600'
+                ? 'text-emerald-400'
+                : 'text-red-400'
             }`}
           >
             {avgReturn}
           </div>
           {avgReturn !== 'N/A' && (
             <p className="text-muted-foreground text-xs mt-1">
-              Based on {calculableCount} equity trades
+              {calculableCount} equity trades
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-muted-foreground text-sm font-medium">Options Trades</CardTitle>
+          <CardTitle className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+            Options / Other
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold tabular-nums">
             {profile.trades.filter((t) => !t.return_calculable).length}
           </div>
           <p className="text-muted-foreground text-xs mt-1">return not calculable</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-muted-foreground text-sm font-medium">Top Asset Types</CardTitle>
+          <CardTitle className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+            Top Asset Types
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {topAssetTypes.length === 0 ? (
               <p className="text-muted-foreground text-sm">No trades</p>
             ) : (
               topAssetTypes.map(({ type, count }) => (
                 <div key={type} className="flex items-center justify-between text-sm">
-                  <span>{type}</span>
-                  <span className="font-mono text-muted-foreground">{count}</span>
+                  <span className="text-foreground/80">{type}</span>
+                  <span className="font-mono tabular-nums text-muted-foreground">{count}</span>
                 </div>
               ))
             )}

@@ -18,6 +18,8 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from sqlalchemy.sql.elements import TextClause
+
 from app.ingestion.pipeline import compute_returns_for_trade
 from app.models.computed_return import ComputedReturn
 from app.models.politician import Politician
@@ -40,13 +42,43 @@ _TEST_TABLES = [
 ]
 
 
+def _strip_pg_function_defaults(tables: list) -> list[tuple]:
+    """Remove text()-based function-call server_defaults that SQLite DDL can't handle.
+
+    PostgreSQL-only expressions like gen_random_uuid() are literal text() clauses that
+    SQLite rejects at CREATE TABLE time. func.now() is left untouched — SQLAlchemy
+    compiles it to CURRENT_TIMESTAMP for SQLite automatically.
+
+    Returns a list of (column, original_default) so callers can restore them.
+    """
+    saved: list[tuple] = []
+    for table in tables:
+        for col in table.columns:
+            sd = col.server_default
+            if sd is None:
+                continue
+            arg = getattr(sd, "arg", None)
+            if isinstance(arg, TextClause) and "(" in str(arg):
+                saved.append((col, sd))
+                col.server_default = None
+    return saved
+
+
 @pytest.fixture()
 async def async_session():
     """Async SQLite in-memory engine with test-relevant tables created."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with engine.begin() as conn:
-        for table in _TEST_TABLES:
-            await conn.run_sync(table.create, checkfirst=True)
+
+    # Strip PostgreSQL-only function defaults before DDL; restore after.
+    # Tests always supply explicit id= values so removing server_defaults is safe.
+    saved_defaults = _strip_pg_function_defaults(_TEST_TABLES)
+    try:
+        async with engine.begin() as conn:
+            for table in _TEST_TABLES:
+                await conn.run_sync(table.create, checkfirst=True)
+    finally:
+        for col, sd in saved_defaults:
+            col.server_default = sd
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:

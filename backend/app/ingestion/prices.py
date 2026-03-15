@@ -197,13 +197,14 @@ async def fetch_and_store_ticker_meta(
 
             def _get_meta(t: str) -> dict:
                 info = yf.Ticker(t).info
-                sector = info.get("sector")   # None for ETFs/options
-                industry = info.get("industry")
+                sector = info.get("sector") or None    # coerce "" to None
+                industry = info.get("industry") or None
                 quote_type = info.get("quoteType")
+                slug = slugify(sector) if sector else None
                 return {
                     "sector": sector,
                     "industry": industry,
-                    "sector_slug": slugify(sector) if sector else None,
+                    "sector_slug": slug if slug else None,  # coerce "" slug to None
                     "quote_type": quote_type,
                 }
 

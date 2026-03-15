@@ -28,34 +28,37 @@ export function PoliticianSectorRadar({ sectors }: Props) {
   }))
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <ResponsiveContainer width="100%" height={280}>
+    <div>
+      <ResponsiveContainer width="100%" height={260}>
         <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-          <PolarGrid stroke="rgba(128,128,128,0.2)" />
+          <PolarGrid stroke="rgba(255,255,255,0.08)" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: '#94a3b8' }}
           />
           <PolarRadiusAxis
             angle={30}
             domain={[0, 'auto']}
-            tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 9, fill: '#64748b' }}
             tickCount={4}
+            axisLine={false}
           />
           <Radar
             name="Trades"
             dataKey="trades"
-            stroke="hsl(var(--primary))"
-            fill="hsl(var(--primary))"
-            fillOpacity={0.25}
+            stroke="#f59e0b"
+            fill="#f59e0b"
+            fillOpacity={0.18}
+            strokeWidth={2}
           />
           <Tooltip
             formatter={(value: number) => [value, 'Trades']}
             contentStyle={{
-              background: 'hsl(var(--popover))',
-              border: '1px solid hsl(var(--border))',
+              background: '#1e293b',
+              border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '6px',
               fontSize: '12px',
+              color: '#f1f5f9',
             }}
           />
         </RadarChart>

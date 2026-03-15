@@ -8,6 +8,8 @@ METHODOLOGY_LABEL_V1 = "v1 — estimated gain/loss vs. entry price (midpoint of 
 class ReturnLeaderboardEntry(BaseModel):
     politician_id: str
     full_name: str
+    chamber: str | None
+    party: str | None
     avg_return_pct: Decimal | None
     return_low: Decimal | None
     return_high: Decimal | None

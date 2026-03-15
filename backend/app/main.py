@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app import cache as redis_cache
 from app.api.cluster import router as cluster_router
+from app.api.conflicts import router as conflicts_router
 from app.api.feed import router as feed_router
 from app.api.internal import router as internal_router
 from app.api.leaderboard import router as leaderboard_router
@@ -74,6 +75,9 @@ app.include_router(cluster_router)
 
 # Mount sector dashboard endpoints (requires migration 0005 — ticker_meta table)
 app.include_router(sectors_router)
+
+# Mount committee conflict detector (requires migration 0006 — politician_committees table)
+app.include_router(conflicts_router)
 
 
 @app.get("/health")

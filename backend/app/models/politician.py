@@ -18,10 +18,12 @@ class Politician(Base):
         server_default=text("gen_random_uuid()"),
     )
     external_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    bio_guide_id: Mapped[str | None] = mapped_column(String, nullable=True)
     full_name: Mapped[str] = mapped_column(String, nullable=False)
     party: Mapped[str | None] = mapped_column(String, nullable=True)
     chamber: Mapped[str | None] = mapped_column(String, nullable=True)  # "House" / "Senate"
     state: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    district: Mapped[int | None] = mapped_column(nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
     created_at: Mapped[object] = mapped_column(
         TIMESTAMP(timezone=True),
