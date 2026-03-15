@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     NEXTJS_URL: str = ""
     REVALIDATE_SECRET: str = ""
     CONGRESS_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,4 +20,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]  # pydantic-settings reads from env/dotenv

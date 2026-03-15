@@ -17,6 +17,7 @@ from app.models.ticker_info import TickerInfo
 from app.models.ticker_meta import TickerMeta
 from app.models.trade import Trade
 from app.schemas.feed import PoliticianProfile, TickerTradeEntry, TickerTrades, TradeEntry
+from app.services.suspicion import score_politician_trades
 
 router = APIRouter(tags=["profiles", "tickers"])
 
@@ -132,6 +133,14 @@ async def get_politician_profile(
     )
     rows = (await db.execute(stmt)).all()
 
+    # Compute suspicion scores for all trades
+    suspicion_data: dict[str, tuple[int, str]] = {}
+    try:
+        scores = await score_politician_trades(politician_id, db)
+        suspicion_data = {tid: (score, __import__('json').dumps(flags)) for tid, score, flags in scores}
+    except Exception:
+        pass  # suspicion scoring is non-critical
+
     trade_entries = [
         TradeEntry(
             trade_id=str(row[0].id),
@@ -145,6 +154,8 @@ async def get_politician_profile(
             amount_upper=row[0].amount_upper,
             return_calculable=row[0].return_calculable,
             avg_return_pct=row[1].return_pct if row[1] else None,
+            suspicion_score=suspicion_data.get(str(row[0].id), (None, None))[0],
+            suspicion_flags=suspicion_data.get(str(row[0].id), (None, None))[1],
         )
         for row in rows
     ]

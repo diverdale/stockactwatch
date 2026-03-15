@@ -54,6 +54,8 @@ class TradeEntry(BaseModel):
     amount_upper: int | None
     return_calculable: bool
     avg_return_pct: Decimal | None    # from computed_returns if available
+    suspicion_score: int | None = None
+    suspicion_flags: str | None = None
 
 
 class PoliticianProfile(BaseModel):

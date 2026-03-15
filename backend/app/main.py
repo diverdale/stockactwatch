@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import cache as redis_cache
+from app.api.ai import router as ai_router
 from app.api.cluster import router as cluster_router
 from app.api.conflicts import router as conflicts_router
 from app.api.feed import router as feed_router
@@ -32,6 +33,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     scheduler.start()
 
     redis_cache._pool = redis_cache.create_pool(settings.REDIS_URL)
+
+    # Score any unscored trades in the background
+    import asyncio
+    from app.db import async_session
+    async def _score_on_startup():
+        async with async_session() as db:
+            from app.services.suspicion import score_unscored_trades
+            await score_unscored_trades(db)
+    asyncio.create_task(_score_on_startup())
 
     yield
 
@@ -78,6 +88,9 @@ app.include_router(sectors_router)
 
 # Mount committee conflict detector (requires migration 0006 — politician_committees table)
 app.include_router(conflicts_router)
+
+# Mount AI endpoints (suspicion scores, politician summaries)
+app.include_router(ai_router)
 
 
 @app.get("/health")

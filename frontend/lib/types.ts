@@ -39,6 +39,8 @@ export interface TradeEntry {
   amount_upper: number | null
   return_calculable: boolean
   avg_return_pct: number | null
+  suspicion_score: number | null
+  suspicion_flags: string | null
 }
 
 export interface PoliticianProfile {

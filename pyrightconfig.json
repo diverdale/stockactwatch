@@ -3,5 +3,6 @@
   "venv": ".venv",
   "pythonVersion": "3.12",
   "include": ["backend/app", "backend/tests"],
-  "extraPaths": ["./backend"]
+  "extraPaths": ["./backend"],
+  "pythonPath": "./backend/.venv/bin/python"
 }

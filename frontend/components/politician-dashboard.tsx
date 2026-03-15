@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ExternalLink, Activity, BarChart2, DollarSign, Calendar, TrendingUp, MapPin } from 'lucide-react'
@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { PoliticianSectorRadar } from '@/components/politician-sector-radar'
 import { DisclosureScore } from '@/components/disclosure-score'
+import { SuspicionBadge } from '@/components/suspicion-badge'
 import type { PoliticianProfile, PoliticianSectorEntry, TradeEntry } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -197,6 +198,8 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
   const [periodIdx, setPeriodIdx] = useState(4)
   const [tradePage, setTradePage] = useState(0)
   const [tradePageSize, setTradePageSize] = useState<10 | 25 | 50 | 100>(25)
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(true)
   const period = PERIODS[periodIdx]
 
   const trades = useMemo(() => {
@@ -282,6 +285,17 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
     }
     return Object.values(m).sort((a, b) => (b.buys + b.sells) - (a.buys + a.sells)).slice(0, 8)
   }, [trades])
+
+  useEffect(() => {
+    setAiLoading(true)
+    fetch(`/api/politician-summary?id=${profile.politician_id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        setAiSummary(data?.summary ?? null)
+        setAiLoading(false)
+      })
+      .catch(() => setAiLoading(false))
+  }, [profile.politician_id])
 
   // ── Party styling ──────────────────────────────────────────────────────────
 
@@ -444,6 +458,25 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
             </a>
           </div>
         )}
+
+        {/* AI summary */}
+        {(aiLoading || aiSummary) && (
+          <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">AI Trading Profile</span>
+              <span className="text-[9px] text-muted-foreground/50 font-mono">claude</span>
+            </div>
+            {aiLoading ? (
+              <div className="space-y-1.5">
+                <div className="h-2 w-full rounded bg-muted/40 animate-pulse" />
+                <div className="h-2 w-5/6 rounded bg-muted/40 animate-pulse" />
+                <div className="h-2 w-4/6 rounded bg-muted/40 animate-pulse" />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground leading-relaxed">{aiSummary}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Center column ─────────────────────────────────────────────────── */}
@@ -497,6 +530,7 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
                     <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Type</th>
                     <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Size</th>
                     <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Return</th>
+                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Suspicion</th>
                     <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Trade Date</th>
                   </tr>
                 </thead>
@@ -540,6 +574,9 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
                           ) : (
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <SuspicionBadge score={trade.suspicion_score ?? null} flags={trade.suspicion_flags ?? null} />
                         </td>
                         <td className="px-4 py-2.5 tabular-nums text-xs">
                           <span className="text-muted-foreground">{trade.trade_date}</span>
