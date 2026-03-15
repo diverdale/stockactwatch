@@ -367,6 +367,10 @@ async def get_ticker_trades(
     ticker_info = await db.get(TickerInfo, ticker_upper)
     company_name = ticker_info.company_name if ticker_info else None
 
+    ticker_meta = await db.get(TickerMeta, ticker_upper)
+    sector = ticker_meta.sector if ticker_meta else None
+    sector_slug = ticker_meta.sector_slug if ticker_meta else None
+
     entries = [
         TickerTradeEntry(
             trade_id=str(trade.id),
@@ -384,7 +388,14 @@ async def get_ticker_trades(
         for trade, pol in rows
     ]
 
-    return TickerTrades(ticker=ticker_upper, company_name=company_name, total_trades=len(rows), trades=entries)
+    return TickerTrades(
+        ticker=ticker_upper,
+        company_name=company_name,
+        sector=sector,
+        sector_slug=sector_slug,
+        total_trades=len(rows),
+        trades=entries,
+    )
 
 
 @router.get("/politicians/{politician_id}/sectors", response_model=PoliticianSectorsResponse)

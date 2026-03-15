@@ -91,5 +91,7 @@ class TickerTradeEntry(BaseModel):
 class TickerTrades(BaseModel):
     ticker: str
     company_name: str | None
+    sector: str | None = None
+    sector_slug: str | None = None
     total_trades: int
     trades: list[TickerTradeEntry]

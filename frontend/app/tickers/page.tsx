@@ -6,8 +6,8 @@ export const revalidate = 600
 
 export function generateMetadata() {
   return {
-    title: 'Tickers | Congressional Stock Tracker',
-    description: 'All stock tickers traded by members of Congress under STOCK Act disclosures.',
+    title: 'Stocks Traded by Congress',
+    description: 'Every stock ticker bought or sold by US Congress members under STOCK Act disclosure requirements.',
     alternates: { canonical: '/tickers' },
   }
 }

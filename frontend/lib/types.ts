@@ -73,6 +73,8 @@ export interface TickerTradeEntry {
 export interface TickerTrades {
   ticker: string
   company_name: string | null
+  sector: string | null
+  sector_slug: string | null
   total_trades: number
   trades: TickerTradeEntry[]
 }

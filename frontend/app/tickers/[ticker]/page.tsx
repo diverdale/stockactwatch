@@ -14,8 +14,13 @@ export async function generateMetadata({
   const { ticker } = await params
   const TICKER = ticker.toUpperCase()
   return {
-    title: `${TICKER} — Congress Trades`,
+    title: `${TICKER} — Congressional Trading Activity`,
+    description: `See every congressional trade in ${TICKER} — who bought, who sold, amounts, dates, and suspicion scores from STOCK Act disclosures.`,
     alternates: { canonical: `/tickers/${TICKER}` },
+    openGraph: {
+      title: `${TICKER} Congressional Trades`,
+      description: `Full congressional trading history for ${TICKER} from public STOCK Act filings.`,
+    },
   }
 }
 
@@ -36,6 +41,8 @@ export default async function TickerPage({
     <TickerDashboard
       ticker={TICKER}
       companyName={data.company_name}
+      sector={data.sector ?? null}
+      sectorSlug={data.sector_slug ?? null}
       allTrades={data.trades}
     />
   )

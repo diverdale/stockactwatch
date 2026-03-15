@@ -14,11 +14,11 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params
+  const name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return {
-    title: `${slug.replace(/-/g, ' ')} Sector | Congressional Stock Tracker`,
-    alternates: {
-      canonical: `/sectors/${slug}`,
-    },
+    title: `${name} Sector — Congressional Trading`,
+    description: `Congressional stock trades in the ${name} sector — buy/sell activity, top traders, and committee overlap analysis.`,
+    alternates: { canonical: `/sectors/${slug}` },
   }
 }
 

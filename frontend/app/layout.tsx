@@ -9,9 +9,34 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Congress Trades — Track Congressional Stock Disclosures',
+  metadataBase: new URL('https://stockactwatch.com'),
+  title: {
+    default: 'Stock Act Watch — Track Congressional Stock Disclosures',
+    template: '%s | Stock Act Watch',
+  },
   description:
-    'Publicly disclosed stock trades by US Congress members under the STOCK Act. Leaderboards, politician profiles, and ticker activity.',
+    'Publicly disclosed stock trades by US Congress members under the STOCK Act. Leaderboards, politician profiles, suspicion scoring, and ticker activity.',
+  keywords: [
+    'congressional stock trades', 'STOCK Act', 'Congress trading', 'politician stocks',
+    'congressional disclosure', 'insider trading Congress', 'Nancy Pelosi trades',
+    'congressional trading tracker',
+  ],
+  openGraph: {
+    type: 'website',
+    siteName: 'Stock Act Watch',
+    title: 'Stock Act Watch — Track Congressional Stock Disclosures',
+    description:
+      'Every STOCK Act disclosure by US Congress members — organized by politician, ticker, and return.',
+    url: 'https://stockactwatch.com',
+    images: [{ url: '/stock_act_watch_logo.png', width: 512, height: 512, alt: 'Stock Act Watch' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Stock Act Watch',
+    description: 'Track every congressional stock trade disclosed under the STOCK Act.',
+    images: ['/stock_act_watch_logo.png'],
+  },
+  alternates: { canonical: 'https://stockactwatch.com' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

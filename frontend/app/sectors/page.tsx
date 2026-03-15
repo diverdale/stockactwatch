@@ -6,8 +6,8 @@ export const revalidate = 600
 
 export function generateMetadata() {
   return {
-    title: 'Sector Activity | Congressional Stock Tracker',
-    description: 'Congressional trading activity grouped by market sector — see which sectors are being bought or sold.',
+    title: 'Congressional Trading by Sector',
+    description: 'Congressional stock trading grouped by market sector — see which sectors Congress is buying and selling.',
     alternates: { canonical: '/sectors' },
   }
 }

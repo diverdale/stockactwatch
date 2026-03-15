@@ -6,8 +6,8 @@ export const revalidate = 600
 
 export function generateMetadata() {
   return {
-    title: 'Members of Congress | Congressional Stock Tracker',
-    description: 'All Congress members who have filed STOCK Act trade disclosures, ranked by trading activity.',
+    title: 'Members of Congress — Congressional Stock Traders',
+    description: 'Every US Congress member who has filed a STOCK Act trade disclosure — browse by name, party, or chamber.',
     alternates: { canonical: '/politicians' },
   }
 }

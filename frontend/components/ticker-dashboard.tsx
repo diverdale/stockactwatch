@@ -209,10 +209,14 @@ function DonutPanel({
 export function TickerDashboard({
   ticker,
   companyName,
+  sector,
+  sectorSlug,
   allTrades,
 }: {
   ticker: string
   companyName: string | null
+  sector: string | null
+  sectorSlug: string | null
   allTrades: TickerTradeEntry[]
 }) {
   const [periodIdx, setPeriodIdx] = useState(4) // default "All"
@@ -315,6 +319,22 @@ export function TickerDashboard({
           <h1 className="text-2xl font-bold tracking-tight font-mono text-primary">{ticker}</h1>
           {companyName && (
             <p className="text-muted-foreground text-xs mt-0.5 truncate">{companyName}</p>
+          )}
+          {sector && (
+            <div className="mt-1.5">
+              {sectorSlug ? (
+                <Link
+                  href={`/sectors/${sectorSlug}`}
+                  className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary/80 hover:bg-primary/20 hover:text-primary transition-colors"
+                >
+                  {sector}
+                </Link>
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary/80">
+                  {sector}
+                </span>
+              )}
+            </div>
           )}
           <div className="flex flex-wrap gap-1 mt-3">
             {PERIODS.map((p, i) => (
@@ -494,6 +514,60 @@ export function TickerDashboard({
                 </table>
               </div>
             </div>
+
+            {/* Top traders — full width below trade history */}
+            <div className="rounded-xl border border-border/60 bg-card/30 p-4">
+              <PanelTitle>Top Traders</PanelTitle>
+              <div className="divide-y divide-border/60">
+                {topTraders.map((trader, i) => {
+                  const total = trader.buys + trader.sells
+                  const buyWidth = total ? Math.round((trader.buys / total) * 100) : 0
+                  return (
+                    <div
+                      key={trader.politician_id}
+                      className="flex items-center gap-3 py-2.5"
+                    >
+                      <span className="w-5 shrink-0 text-center text-[10px] font-semibold text-muted-foreground tabular-nums">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/politicians/${trader.politician_id}`}
+                            className="text-sm font-medium hover:text-primary transition-colors truncate"
+                          >
+                            {trader.name}
+                          </Link>
+                          {trader.party && (
+                            <span className="text-[10px] font-medium shrink-0" style={{ color: PARTY_COLORS[trader.party] ?? '#94a3b8' }}>
+                              {trader.party[0]}
+                            </span>
+                          )}
+                          {trader.chamber && (
+                            <span className="text-[10px] shrink-0 text-muted-foreground">
+                              {trader.chamber}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="h-1 w-24 overflow-hidden rounded-full bg-red-400/30">
+                            <div className="h-full rounded-full bg-emerald-400" style={{ width: `${buyWidth}%` }} />
+                          </div>
+                          <span className="text-[10px] tabular-nums text-muted-foreground">
+                            <span className="text-emerald-400">{trader.buys}B</span>
+                            {' / '}
+                            <span className="text-red-400">{trader.sells}S</span>
+                          </span>
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-xs tabular-nums font-medium text-muted-foreground">
+                        {total} trades
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -507,55 +581,6 @@ export function TickerDashboard({
           data={buySellDonut}
           colorMap={{ Buy: '#34d399', Sell: '#f87171' }}
         />
-
-        {/* Top traders */}
-        <div className="rounded-xl border border-border/60 bg-card/30 p-4">
-          <PanelTitle>Top Traders</PanelTitle>
-          <div className="max-h-[560px] overflow-y-auto space-y-0">
-            {topTraders.map((trader, i) => {
-              const total = trader.buys + trader.sells
-              const buyWidth = total ? Math.round((trader.buys / total) * 100) : 0
-              return (
-                <div
-                  key={trader.politician_id}
-                  className="flex items-center gap-2 border-b border-border/60 py-2.5 last:border-0"
-                >
-                  <span className="w-4 shrink-0 text-center text-[10px] font-semibold text-muted-foreground tabular-nums">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/politicians/${trader.politician_id}`}
-                      className="text-sm font-medium hover:text-primary transition-colors truncate block"
-                    >
-                      {trader.name}
-                    </Link>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      {trader.party && (
-                        <span className="text-[10px] font-medium" style={{ color: PARTY_COLORS[trader.party] ?? '#94a3b8' }}>
-                          {trader.party[0]}
-                        </span>
-                      )}
-                      {trader.chamber && (
-                        <span className="text-[10px]" style={{ color: CHAMBER_COLORS[trader.chamber] ?? '#94a3b8' }}>
-                          {trader.chamber}
-                        </span>
-                      )}
-                      <div className="flex-1 h-1 overflow-hidden rounded-full bg-red-400/30 max-w-[50px]">
-                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${buyWidth}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground whitespace-nowrap">
-                    <span className="text-emerald-400">{trader.buys}B</span>
-                    {' / '}
-                    <span className="text-red-400">{trader.sells}S</span>
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </div>
 
     </div>

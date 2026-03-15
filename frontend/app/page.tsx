@@ -1,5 +1,6 @@
 // app/page.tsx — Marketing landing page
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Activity,
   BarChart2,
@@ -147,6 +148,17 @@ export default async function LandingPage() {
         />
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-6 flex justify-center">
+              <Image
+                src="/stock_act_watch_logo.png"
+                alt="Stock Act Watch"
+                width={160}
+                height={160}
+                className="drop-shadow-[0_0_24px_oklch(0.55_0.22_255_/_30%)]"
+                priority
+              />
+            </div>
+
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />

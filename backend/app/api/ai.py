@@ -1,7 +1,7 @@
-"""AI-powered endpoints: suspicion scores and politician summaries."""
+"""AI-powered endpoints: suspicion scores, politician summaries, and natural language Q&A."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,3 +45,31 @@ async def get_politician_summary(
         generated_at=result.get("generated_at"),
         cached=False,
     )
+
+
+class AskRequest(BaseModel):
+    question: str
+
+
+class AskResponse(BaseModel):
+    answer: str
+    results: list[dict] | None = None
+    tool_used: str | None = None
+
+
+@router.post("/ask", response_model=AskResponse)
+async def ask_question(
+    body: AskRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AskResponse:
+    """Answer a natural language question about congressional trading data using Claude."""
+    from app.services.ask import answer_question
+
+    q = body.question.strip()
+    if not q:
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+    if len(q) > 500:
+        raise HTTPException(status_code=400, detail="Question too long (max 500 chars)")
+
+    result = await answer_question(q, db)
+    return AskResponse(**result)

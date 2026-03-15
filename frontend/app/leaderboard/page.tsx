@@ -7,8 +7,8 @@ import type { LeaderboardResponse, VolumeLeaderboardResponse } from '@/lib/types
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Leaderboard — Congress Trades',
-  description: 'Congress members ranked by estimated returns and trading activity from public STOCK Act disclosures.',
+  title: 'Congressional Trading Leaderboard',
+  description: 'Congress members ranked by estimated returns and total trading volume from public STOCK Act disclosures.',
   alternates: { canonical: '/leaderboard' },
 }
 

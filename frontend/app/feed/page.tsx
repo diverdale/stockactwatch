@@ -11,8 +11,8 @@ import type { FeedResponse } from '@/lib/types'
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Trades — Congress Trades',
-  description: 'Recent congressional stock trade disclosures from public STOCK Act filings.',
+  title: 'Congressional Stock Trades — Live Feed',
+  description: 'Real-time feed of congressional stock trade disclosures filed under the STOCK Act.',
   alternates: { canonical: '/feed' },
 }
 

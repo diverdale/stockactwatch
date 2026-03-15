@@ -6,9 +6,9 @@ export const revalidate = 600
 
 export async function generateMetadata() {
   return {
-    title: 'Committee Conflicts | Congressional Stock Tracker',
+    title: 'Committee Conflicts',
     description:
-      'Trades where members sit on oversight committees for the sector they traded — with hearing timeline analysis',
+      'Congressional trades where members sit on oversight committees for the sector they traded — with hearing timeline analysis.',
     alternates: { canonical: '/conflicts' },
   }
 }

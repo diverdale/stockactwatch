@@ -20,11 +20,16 @@ export async function generateMetadata({
       revalidate: 3600,
     })
     return {
-      title: `${profile.full_name} — Congress Trades`,
+      title: profile.full_name,
+      description: `Stock trades disclosed by ${profile.full_name} (${profile.party ?? 'Congress'}) under the STOCK Act. Full trade history, returns, and suspicion scoring.`,
       alternates: { canonical: `/politicians/${id}` },
+      openGraph: {
+        title: `${profile.full_name} — Congressional Stock Trades`,
+        description: `STOCK Act disclosures, estimated returns, and trading patterns for ${profile.full_name}.`,
+      },
     }
   } catch {
-    return { title: 'Congress Member — Congress Trades' }
+    return { title: 'Congress Member' }
   }
 }
 
