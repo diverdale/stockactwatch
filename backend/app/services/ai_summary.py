@@ -138,13 +138,23 @@ Committee memberships: {committees_text}
 
 Write the summary now:"""
 
-    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return message.content[0].text.strip()
+    import ssl, httpx, truststore
+    try:
+        truststore.inject_into_ssl()
+        ctx = ssl.create_default_context()
+        client = anthropic.AsyncAnthropic(
+            api_key=settings.ANTHROPIC_API_KEY,
+            http_client=httpx.AsyncClient(verify=ctx),
+        )
+        message = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return message.content[0].text.strip()
+    except Exception as e:
+        log.error("AI summary generation failed: %s — %s", type(e).__name__, e, exc_info=True)
+        return ""
 
 
 async def get_or_generate_summary(

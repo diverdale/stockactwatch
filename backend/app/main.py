@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Score any unscored trades in the background
     import asyncio
-    from app.db import async_session
+    from app.db import AsyncSessionLocal
     async def _score_on_startup():
-        async with async_session() as db:
+        async with AsyncSessionLocal() as db:
             from app.services.suspicion import score_unscored_trades
             await score_unscored_trades(db)
     asyncio.create_task(_score_on_startup())

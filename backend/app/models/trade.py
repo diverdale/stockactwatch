@@ -48,6 +48,8 @@ class Trade(Base):
         Boolean, nullable=False, default=True, server_default=text("true")
     )
     source: Mapped[str] = mapped_column(String, nullable=False)  # "quiver" / "capitol_trades"
+    suspicion_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    suspicion_flags: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[object] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,
