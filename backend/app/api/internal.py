@@ -175,3 +175,27 @@ async def backfill_sector_meta(
     missing_tickers = [row[0] for row in result.fetchall()]
     await fetch_and_store_ticker_meta(db, missing_tickers)
     return {"status": "ok", "enriched": len(missing_tickers)}
+
+
+@router.post("/internal/backfill-prices")
+async def backfill_prices(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    since: str = "2024-01-01",
+) -> dict:
+    """Bulk-download full price history and recompute returns for all trades since `since`.
+
+    Protected by INTERNAL_SECRET header. This is a slow operation — runs synchronously,
+    expect 5–20 minutes for a full 2-year backfill across 400+ tickers.
+    """
+    from datetime import date as date_type
+    from app.ingestion.prices import backfill_price_history
+
+    secret = request.headers.get("X-Internal-Secret", "")
+    if not hmac.compare_digest(secret, settings.INTERNAL_SECRET):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    since_date = date_type.fromisoformat(since)
+    logger.info("Price history backfill triggered via POST /internal/backfill-prices since=%s", since)
+    result = await backfill_price_history(db, since_date)
+    return {"status": "ok", "since": since, **result}
