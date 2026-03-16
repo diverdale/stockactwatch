@@ -4,12 +4,17 @@ import type { NextConfig } from "next";
 // Set NEXT_OUTPUT=standalone in your Docker build environment to enable it.
 const nextConfig: NextConfig = {
   ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" } : {}),
+  transpilePackages: ['@clerk/nextjs', '@clerk/shared', '@clerk/react'],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "bioguide.congress.gov",
         pathname: "/bioguide/photo/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.clerk.com",
       },
     ],
   },
