@@ -85,50 +85,84 @@ async def fetch_and_store_prices(
 ) -> None:
     """Fetch last `days` days of daily closes for `tickers` and upsert into price_snapshots.
 
-    The S&P 500 benchmark (^GSPC) is always fetched regardless of the tickers list —
-    benchmark data is required for all returns computations.
+    Makes ONE yfinance batch download per ticker (not one per day) and skips
+    ticker+date pairs already present in the DB to avoid redundant API calls.
 
+    The S&P 500 benchmark (^GSPC) is always fetched regardless of the tickers list.
     Uses INSERT ... ON CONFLICT (ticker, snapshot_date) DO UPDATE to make this idempotent.
-
-    Parameters
-    ----------
-    session:
-        Active async SQLAlchemy session.
-    tickers:
-        List of equity tickers to fetch. ^GSPC is appended automatically if not present.
-    price_client:
-        Optional PriceClient injection (default: YFinancePriceClient()). Used in tests.
-    days:
-        Number of trailing calendar days to fetch. Default 30.
     """
-    from app.models.price_snapshot import PriceSnapshot
+    import asyncio
 
-    if price_client is None:
-        price_client = YFinancePriceClient()
+    from sqlalchemy import select
+    from app.models.price_snapshot import PriceSnapshot
 
     # Always include ^GSPC for S&P 500 benchmark data
     all_tickers = list(dict.fromkeys([*tickers, "^GSPC"]))
 
     today = date.today()
-    dates_to_fetch = [today - timedelta(days=i) for i in range(days)]
+    start_date = today - timedelta(days=days)
+
+    # Load existing (ticker, snapshot_date) pairs so we skip already-fetched data
+    existing_result = await session.execute(
+        select(PriceSnapshot.ticker, PriceSnapshot.snapshot_date)
+        .where(PriceSnapshot.ticker.in_(all_tickers))
+        .where(PriceSnapshot.snapshot_date >= start_date)
+    )
+    existing_set: set[tuple] = {(row.ticker, row.snapshot_date) for row in existing_result}
 
     for ticker in all_tickers:
-        for as_of_date in dates_to_fetch:
-            close_price = await price_client.get_daily_close(ticker, as_of_date)
-            if close_price is None:
+        # Determine which dates are missing for this ticker
+        missing_dates = {
+            start_date + timedelta(days=i)
+            for i in range(days + 1)
+            if (ticker, start_date + timedelta(days=i)) not in existing_set
+        }
+        if not missing_dates:
+            continue  # All dates already in DB — nothing to fetch
+
+        try:
+            import yfinance as yf
+
+            def _download() -> "object":
+                return yf.download(
+                    ticker,
+                    start=start_date.isoformat(),
+                    end=(today + timedelta(days=1)).isoformat(),
+                    auto_adjust=True,
+                    progress=False,
+                )
+
+            df = await asyncio.to_thread(_download)
+            if df.empty:  # type: ignore[union-attr]
                 continue
 
-            stmt = pg_insert(PriceSnapshot).values(
-                ticker=ticker,
-                snapshot_date=as_of_date,
-                close_price=close_price,
-                source="yfinance",
-            )
-            stmt = stmt.on_conflict_do_update(
-                index_elements=["ticker", "snapshot_date"],
-                set_={"close_price": stmt.excluded.close_price, "source": stmt.excluded.source},
-            )
-            await session.execute(stmt)
+            # Flatten MultiIndex columns if present (yfinance ≥0.2 single-ticker wraps)
+            if hasattr(df.columns, "levels"):  # type: ignore[union-attr]
+                df.columns = df.columns.droplevel(1)  # type: ignore[union-attr]
+
+            for idx_date, row in df.iterrows():  # type: ignore[union-attr]
+                snap_date = idx_date.date() if hasattr(idx_date, "date") else idx_date
+                if snap_date not in missing_dates:
+                    continue  # Already in DB
+                close = row["Close"]
+                if hasattr(close, "item"):
+                    close = close.item()
+                if close is None or close != close:  # NaN check
+                    continue
+                stmt = pg_insert(PriceSnapshot).values(
+                    ticker=ticker,
+                    snapshot_date=snap_date,
+                    close_price=Decimal(str(close)),
+                    source="yfinance",
+                )
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["ticker", "snapshot_date"],
+                    set_={"close_price": stmt.excluded.close_price, "source": stmt.excluded.source},
+                )
+                await session.execute(stmt)
+
+        except Exception as exc:
+            logger.warning("fetch_and_store_prices: failed for %s: %s", ticker, exc)
 
     await session.commit()
 
