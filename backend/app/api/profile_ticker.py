@@ -180,6 +180,136 @@ async def get_politician_profile(
     )
 
 
+class AnnualReturnEntry(BaseModel):
+    year: int
+    trade_count: int
+    priced_count: int
+    weighted_return_pct: float | None
+    avg_sp500_return_pct: float | None
+    alpha: float | None  # weighted_return_pct - avg_sp500_return_pct
+
+
+class AnnualReturnsResponse(BaseModel):
+    politician_id: str
+    entries: list[AnnualReturnEntry]
+    cached: bool
+    methodology_note: str = (
+        "Returns are estimated. Entry price = closing price on trade date. "
+        "Exit price = closing price on Dec 31 of that year (or today for the current year). "
+        "Weighted by disclosed amount midpoint. Options excluded. Data may be incomplete."
+    )
+
+
+@router.get("/politicians/{politician_id}/annual-returns", response_model=AnnualReturnsResponse)
+async def get_politician_annual_returns(
+    politician_id: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> AnnualReturnsResponse:
+    try:
+        pol_uuid = uuid.UUID(politician_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid politician_id")
+
+    cache_key = f"politician:annual_returns:{politician_id}"
+    cached_raw = await redis.get(cache_key)
+    if cached_raw:
+        import json
+        data = json.loads(cached_raw)
+        return AnnualReturnsResponse(
+            politician_id=politician_id,
+            entries=[AnnualReturnEntry(**e) for e in data],
+            cached=True,
+        )
+
+    from sqlalchemy import text as _text
+    sql = _text("""
+        WITH trade_years AS (
+            SELECT
+                t.id,
+                t.ticker,
+                t.trade_date,
+                t.amount_midpoint,
+                EXTRACT(YEAR FROM t.trade_date)::int AS trade_year
+            FROM trades t
+            WHERE t.politician_id = :politician_id
+              AND t.transaction_type ILIKE '%purchase%'
+              AND t.return_calculable = true
+              AND t.amount_midpoint IS NOT NULL
+        ),
+        trade_returns AS (
+            SELECT
+                ty.trade_year,
+                ty.amount_midpoint,
+                CASE WHEN ep.entry_price > 0
+                     THEN (xp.exit_price - ep.entry_price) / ep.entry_price * 100
+                     ELSE NULL END AS return_pct,
+                CASE WHEN sep.sp_entry_price > 0
+                     THEN (sxp.sp_exit_price - sep.sp_entry_price) / sep.sp_entry_price * 100
+                     ELSE NULL END AS sp500_return_pct
+            FROM trade_years ty
+            LEFT JOIN LATERAL (
+                SELECT close_price AS entry_price FROM price_snapshots
+                WHERE ticker = ty.ticker AND snapshot_date <= ty.trade_date
+                ORDER BY snapshot_date DESC LIMIT 1
+            ) ep ON true
+            LEFT JOIN LATERAL (
+                SELECT close_price AS exit_price FROM price_snapshots
+                WHERE ticker = ty.ticker
+                  AND snapshot_date <= LEAST(make_date(ty.trade_year, 12, 31), CURRENT_DATE)
+                ORDER BY snapshot_date DESC LIMIT 1
+            ) xp ON true
+            LEFT JOIN LATERAL (
+                SELECT close_price AS sp_entry_price FROM price_snapshots
+                WHERE ticker = '^GSPC' AND snapshot_date <= ty.trade_date
+                ORDER BY snapshot_date DESC LIMIT 1
+            ) sep ON true
+            LEFT JOIN LATERAL (
+                SELECT close_price AS sp_exit_price FROM price_snapshots
+                WHERE ticker = '^GSPC'
+                  AND snapshot_date <= LEAST(make_date(ty.trade_year, 12, 31), CURRENT_DATE)
+                ORDER BY snapshot_date DESC LIMIT 1
+            ) sxp ON true
+        )
+        SELECT
+            trade_year,
+            COUNT(*)                                                                          AS trade_count,
+            COUNT(*) FILTER (WHERE return_pct IS NOT NULL)                                   AS priced_count,
+            SUM(return_pct * amount_midpoint) FILTER (WHERE return_pct IS NOT NULL)
+                / NULLIF(SUM(amount_midpoint) FILTER (WHERE return_pct IS NOT NULL), 0)      AS weighted_return_pct,
+            AVG(sp500_return_pct) FILTER (WHERE sp500_return_pct IS NOT NULL)                AS avg_sp500_return_pct
+        FROM trade_returns
+        GROUP BY trade_year
+        HAVING COUNT(*) FILTER (WHERE return_pct IS NOT NULL) > 0
+        ORDER BY trade_year DESC
+    """)
+
+    rows = (await db.execute(sql, {"politician_id": str(pol_uuid)})).all()
+
+    entries = []
+    for row in rows:
+        wrp = float(row.weighted_return_pct) if row.weighted_return_pct is not None else None
+        sp = float(row.avg_sp500_return_pct) if row.avg_sp500_return_pct is not None else None
+        alpha = round(wrp - sp, 2) if wrp is not None and sp is not None else None
+        entries.append(AnnualReturnEntry(
+            year=row.trade_year,
+            trade_count=row.trade_count,
+            priced_count=row.priced_count,
+            weighted_return_pct=round(wrp, 2) if wrp is not None else None,
+            avg_sp500_return_pct=round(sp, 2) if sp is not None else None,
+            alpha=alpha,
+        ))
+
+    import json
+    await redis.setex(cache_key, 3600, json.dumps([e.model_dump() for e in entries], default=str))
+
+    return AnnualReturnsResponse(
+        politician_id=politician_id,
+        entries=entries,
+        cached=False,
+    )
+
+
 class TickerListEntry(BaseModel):
     ticker: str
     company_name: str | None

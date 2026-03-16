@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { auth } from '@clerk/nextjs/server'
 import { Disclaimer } from '@/components/disclaimer'
 import { LeaderboardTable } from '@/components/leaderboard-table'
+import { PaywallGate } from '@/components/paywall-gate'
 import { apiFetch } from '@/lib/api'
 import type { LeaderboardResponse, VolumeLeaderboardResponse } from '@/lib/types'
 
@@ -13,21 +15,17 @@ export const metadata: Metadata = {
 }
 
 export default async function LeaderboardPage() {
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   const [returnsData, volumeData] = await Promise.all([
-    apiFetch<LeaderboardResponse>('/leaderboard/returns', {
-      tags: ['leaderboard-returns'],
-      revalidate: 300,
-    }),
-    apiFetch<VolumeLeaderboardResponse>('/leaderboard/volume', {
-      tags: ['leaderboard-volume'],
-      revalidate: 300,
-    }),
+    apiFetch<LeaderboardResponse>('/leaderboard/returns', { tags: ['leaderboard-returns'], revalidate: 300 }),
+    apiFetch<VolumeLeaderboardResponse>('/leaderboard/volume', { tags: ['leaderboard-volume'], revalidate: 300 }),
   ])
 
-  const methodologyLabel =
-    returnsData.entries[0]?.methodology_label ?? 'estimated gain/loss vs. entry price'
+  const methodologyLabel = returnsData.entries[0]?.methodology_label ?? 'estimated gain/loss vs. entry price'
 
-  return (
+  const content = (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <div>
@@ -48,4 +46,14 @@ export default async function LeaderboardPage() {
       />
     </div>
   )
+
+  if (!isSignedIn) {
+    return (
+      <PaywallGate locked size="page" message="Sign in to see who's winning — and losing — in Congress">
+        {content}
+      </PaywallGate>
+    )
+  }
+
+  return content
 }

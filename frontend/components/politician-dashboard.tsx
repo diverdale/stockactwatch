@@ -2,7 +2,9 @@
 import { useMemo, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ExternalLink, Activity, BarChart2, DollarSign, Calendar, TrendingUp, MapPin } from 'lucide-react'
+import { ExternalLink, Activity, BarChart2, DollarSign, Calendar, TrendingUp, MapPin, Info } from 'lucide-react'
+import { FollowButton } from '@/components/follow-button'
+import { PaywallGate } from '@/components/paywall-gate'
 import {
   AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -11,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { PoliticianSectorRadar } from '@/components/politician-sector-radar'
 import { DisclosureScore } from '@/components/disclosure-score'
 import { SuspicionBadge } from '@/components/suspicion-badge'
-import type { PoliticianProfile, PoliticianSectorEntry, TradeEntry } from '@/lib/types'
+import type { PoliticianProfile, PoliticianSectorEntry, TradeEntry, AnnualReturn } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -192,14 +194,114 @@ function DonutPanel({
   )
 }
 
+// ── Annual Returns Panel ──────────────────────────────────────────────────────
+
+function AnnualReturnsPanel({ politicianId }: { politicianId: string }) {
+  const [entries, setEntries] = useState<AnnualReturn[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showNote, setShowNote] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/politician-annual-returns?id=${politicianId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        setEntries(data?.entries ?? [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [politicianId])
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3 animate-pulse">
+        <div className="h-3 w-28 rounded bg-muted/40 mb-3" />
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex gap-2 py-1.5 border-b border-border/30 last:border-0">
+            <div className="h-3 w-10 rounded bg-muted/30" />
+            <div className="ml-auto h-3 w-12 rounded bg-muted/20" />
+            <div className="h-3 w-12 rounded bg-muted/20" />
+            <div className="h-3 w-10 rounded bg-muted/20" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (!entries.length) return null
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          Annual Returns (Est.)
+        </p>
+        <button
+          onClick={() => setShowNote(n => !n)}
+          className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          title="Methodology note"
+        >
+          <Info className="h-3 w-3" />
+        </button>
+      </div>
+
+      {showNote && (
+        <p className="text-[10px] text-muted-foreground/70 leading-relaxed mb-2 border-b border-border/30 pb-2">
+          Entry = closing price on trade date. Exit = Dec 31 close (or today for current year).
+          Weighted by disclosed amount midpoint. Options excluded. Estimates only.
+        </p>
+      )}
+
+      {/* Header row */}
+      <div className="grid grid-cols-4 gap-1 mb-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60">
+        <span>Year</span>
+        <span className="text-right">Return</span>
+        <span className="text-right">S&amp;P 500</span>
+        <span className="text-right">Alpha</span>
+      </div>
+
+      {entries.map(e => {
+        const ret = e.weighted_return_pct
+        const sp = e.avg_sp500_return_pct
+        const alpha = e.alpha
+        const retColor = ret === null ? 'text-muted-foreground' : ret >= 0 ? 'text-emerald-400' : 'text-red-400'
+        const alphaColor = alpha === null ? 'text-muted-foreground' : alpha >= 0 ? 'text-emerald-400' : 'text-red-400'
+        return (
+          <div
+            key={e.year}
+            className="grid grid-cols-4 gap-1 py-1.5 border-b border-border/30 last:border-0 text-xs tabular-nums"
+          >
+            <span className="font-medium">{e.year}</span>
+            <span className={`text-right font-semibold ${retColor}`}>
+              {ret !== null ? `${ret >= 0 ? '+' : ''}${ret.toFixed(1)}%` : '—'}
+            </span>
+            <span className="text-right text-muted-foreground">
+              {sp !== null ? `${sp >= 0 ? '+' : ''}${sp.toFixed(1)}%` : '—'}
+            </span>
+            <span className={`text-right font-semibold ${alphaColor}`}>
+              {alpha !== null ? `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%` : '—'}
+            </span>
+          </div>
+        )
+      })}
+
+      <p className="text-[9px] text-muted-foreground/40 mt-2">
+        {entries[0]?.priced_count}/{entries[0]?.trade_count} trades priced in {entries[0]?.year}
+      </p>
+    </div>
+  )
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianProfile; sectors?: PoliticianSectorEntry[] }) {
+export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { profile: PoliticianProfile; sectors?: PoliticianSectorEntry[]; isSignedIn?: boolean }) {
   const [periodIdx, setPeriodIdx] = useState(4)
   const [tradePage, setTradePage] = useState(0)
   const [tradePageSize, setTradePageSize] = useState<10 | 25 | 50 | 100>(25)
   const [aiSummary, setAiSummary] = useState<string | null>(null)
   const [aiLoading, setAiLoading] = useState(true)
+  const [aiOpen, setAiOpen] = useState(true)
+  const [sortCol, setSortCol] = useState<string>('trade_date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const period = PERIODS[periodIdx]
 
   const trades = useMemo(() => {
@@ -207,8 +309,30 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
     return filterByDays(profile.trades, period.days)
   }, [profile.trades, period.days])
 
-  const tradePages = Math.ceil(trades.length / tradePageSize)
-  const pagedTrades = trades.slice(tradePage * tradePageSize, (tradePage + 1) * tradePageSize)
+  function toggleSort(col: string) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+    setTradePage(0)
+  }
+
+  const sortedTrades = useMemo(() => {
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...trades].sort((a, b) => {
+      switch (sortCol) {
+        case 'ticker':      return dir * a.ticker.localeCompare(b.ticker)
+        case 'asset_type':  return dir * (a.asset_type ?? '').localeCompare(b.asset_type ?? '')
+        case 'type':        return dir * (a.transaction_type ?? '').localeCompare(b.transaction_type ?? '')
+        case 'size':        return dir * ((a.amount_lower ?? 0) - (b.amount_lower ?? 0))
+        case 'return':      return dir * ((a.avg_return_pct ?? 0) - (b.avg_return_pct ?? 0))
+        case 'suspicion':   return dir * ((a.suspicion_score ?? 0) - (b.suspicion_score ?? 0))
+        case 'trade_date':  return dir * a.trade_date.localeCompare(b.trade_date)
+        default:            return 0
+      }
+    })
+  }, [trades, sortCol, sortDir])
+
+  const tradePages = Math.ceil(sortedTrades.length / tradePageSize)
+  const pagedTrades = sortedTrades.slice(tradePage * tradePageSize, (tradePage + 1) * tradePageSize)
 
   // ── Derived stats ──────────────────────────────────────────────────────────
 
@@ -371,6 +495,9 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
                 <DisclosureScore trades={profile.trades} />
               </div>
             )}
+            <div className="mt-3 flex justify-center">
+              <FollowButton type="politician" refId={profile.politician_id} />
+            </div>
           </div>
 
           {/* Period filter */}
@@ -443,6 +570,9 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
           />
         </div>
 
+        {/* Annual returns */}
+        <AnnualReturnsPanel politicianId={profile.politician_id} />
+
         {/* Social / external links */}
         {profile.bio_guide_id && (
           <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3">
@@ -459,26 +589,9 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
           </div>
         )}
 
-        {/* AI summary */}
-        {(aiLoading || aiSummary) && (
-          <div className="rounded-xl border border-border/60 bg-card/30 px-4 py-3">
-            <div className="flex items-center gap-1.5 mb-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">AI Trading Profile</span>
-              <span className="text-[9px] text-muted-foreground/50 font-mono">claude</span>
-            </div>
-            {aiLoading ? (
-              <div className="space-y-1.5">
-                <div className="h-2 w-full rounded bg-muted/40 animate-pulse" />
-                <div className="h-2 w-5/6 rounded bg-muted/40 animate-pulse" />
-                <div className="h-2 w-4/6 rounded bg-muted/40 animate-pulse" />
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground leading-relaxed">{aiSummary}</p>
-            )}
-          </div>
-        )}
       </div>
 
+      <PaywallGate locked={!isSignedIn} className="lg:col-span-2">
       {/* ── Center column ─────────────────────────────────────────────────── */}
       <div className="space-y-4">
         {trades.length === 0 ? (
@@ -519,19 +632,39 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
               <div className="px-4 pt-4 pb-2 flex items-center justify-between">
                 <PanelTitle>Trade History</PanelTitle>
                 <span className="text-xs text-muted-foreground">
-                  {trades.length} trade{trades.length !== 1 ? 's' : ''}
+                  {sortedTrades.length} trade{sortedTrades.length !== 1 ? 's' : ''}
                 </span>
               </div>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/60 text-left bg-muted/20">
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Ticker</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs hidden sm:table-cell">Asset</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Type</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Size</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Return</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Suspicion</th>
-                    <th className="px-4 py-2 font-medium text-muted-foreground text-xs">Trade Date</th>
+                    {([
+                      { col: 'ticker',     label: 'Ticker',      cls: '' },
+                      { col: 'asset_type', label: 'Asset',       cls: 'hidden sm:table-cell' },
+                      { col: 'type',       label: 'Type',        cls: '' },
+                      { col: 'size',       label: 'Size',        cls: '' },
+                      { col: 'return',     label: 'Return',      cls: '' },
+                      { col: 'suspicion',  label: '✦ Suspicion', cls: '', gradient: true },
+                      { col: 'trade_date', label: 'Trade Date',  cls: '' },
+                    ] as { col: string; label: string; cls: string; gradient?: boolean }[]).map(({ col, label, cls, gradient }) => {
+                      const active = sortCol === col
+                      return (
+                        <th key={col} className={`px-4 py-2 ${cls}`}>
+                          <button
+                            onClick={() => toggleSort(col)}
+                            className={`flex items-center gap-0.5 text-xs font-medium cursor-pointer select-none transition-colors whitespace-nowrap ${active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                          >
+                            <span className={gradient ? 'bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent font-semibold' : ''}>
+                              {label}
+                            </span>
+                            {active
+                              ? <span className="ml-0.5 text-[10px]">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                              : <span className="ml-0.5 text-muted-foreground/30 text-[10px]">↕</span>
+                            }
+                          </button>
+                        </th>
+                      )
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -645,6 +778,40 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
       {/* ── Right column ──────────────────────────────────────────────────── */}
       <div className="space-y-4">
 
+        {/* AI summary */}
+        {(aiLoading || aiSummary) && (
+          <div className="rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-card/40 to-indigo-950/30 shadow-[0_0_24px_-6px_rgba(139,92,246,0.25)]">
+            <button
+              onClick={() => setAiOpen(o => !o)}
+              className="flex w-full items-center justify-between px-4 py-3"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">✦</span>
+                <span className="text-xs font-semibold tracking-wide bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+                  AI Trading Profile
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-violet-500/50 font-mono">claude</span>
+                <span className={`text-violet-500/50 text-xs transition-transform duration-200 ${aiOpen ? 'rotate-180' : ''}`}>▾</span>
+              </div>
+            </button>
+            {aiOpen && (
+              <div className="px-4 pb-3 border-t border-violet-500/10 pt-3">
+                {aiLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-2 w-full rounded-full bg-violet-500/10 animate-pulse" />
+                    <div className="h-2 w-5/6 rounded-full bg-violet-500/10 animate-pulse" />
+                    <div className="h-2 w-4/6 rounded-full bg-violet-500/10 animate-pulse" />
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground/90 leading-relaxed">{aiSummary}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Buy vs Sell donut */}
         <DonutPanel
           title="Buy vs Sell"
@@ -705,6 +872,7 @@ export function PoliticianDashboard({ profile, sectors }: { profile: PoliticianP
         </div>
 
       </div>
+      </PaywallGate>
     </div>
   )
 }

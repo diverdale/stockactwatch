@@ -12,7 +12,10 @@ import {
   Layers,
   Scale,
   Sparkles,
+  LayoutDashboard,
+  Zap,
 } from 'lucide-react'
+import { SignInButton, SignUpButton, UserButton, Show } from '@clerk/nextjs'
 import { SearchCombobox } from '@/components/search-combobox'
 
 const links = [
@@ -34,7 +37,7 @@ export function SiteNav() {
       {/* subtle gradient accent line at the bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2.5">
+      <div className="flex w-full items-center gap-4 px-4 py-2.5">
 
         {/* Brand */}
         <Link
@@ -52,7 +55,7 @@ export function SiteNav() {
         <div className="mx-1 h-5 w-px bg-border/60" />
 
         {/* Nav links */}
-        <div className="flex items-center gap-0.5 text-sm overflow-x-auto scrollbar-none">
+        <div className="flex flex-1 min-w-0 items-center gap-0.5 text-sm">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
             return (
@@ -73,10 +76,48 @@ export function SiteNav() {
                     active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
                   }`}
                 />
-                {label}
+                <span className="hidden xl:inline">{label}</span>
               </Link>
             )
           })}
+
+          {/* Dashboard — signed-in only */}
+          <Show when="signed-in">
+            <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
+            <Link
+              href="/dashboard"
+              className={`
+                group flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+                transition-all duration-150 whitespace-nowrap
+                ${pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                }
+              `}
+            >
+              <LayoutDashboard className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+                pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
+              }`} />
+              <span className="hidden xl:inline">Dashboard</span>
+            </Link>
+          </Show>
+
+          {/* Pricing */}
+          <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
+          <Link
+            href="/pricing"
+            className={`
+              group flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+              transition-all duration-150 whitespace-nowrap
+              ${pathname === '/pricing'
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+              }
+            `}
+          >
+            <Zap className={`h-3.5 w-3.5 shrink-0 transition-colors ${pathname === '/pricing' ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'}`} />
+            <span className="hidden xl:inline">Pricing</span>
+          </Link>
 
           {/* AI Ask — visually distinct */}
           <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
@@ -96,13 +137,34 @@ export function SiteNav() {
                 askActive ? 'text-violet-300' : 'text-violet-400/60 group-hover:text-violet-300'
               }`}
             />
-            Ask AI
+            <span className="hidden xl:inline">Ask AI</span>
           </Link>
         </div>
 
-        {/* Search */}
-        <div className="ml-auto shrink-0">
+        {/* Search + auth */}
+        <div className="flex items-center gap-3 shrink-0">
           <SearchCombobox />
+          <Show when="signed-out">
+            <SignInButton>
+              <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton>
+              <button className="text-xs font-medium rounded-md bg-primary/15 text-primary px-2.5 py-1.5 hover:bg-primary/25 transition-colors">
+                Sign up
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'h-7 w-7',
+                },
+              }}
+            />
+          </Show>
         </div>
       </div>
     </nav>

@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app import cache as redis_cache
 from app.api.ai import router as ai_router
+from app.api.watchlist import router as watchlist_router
 from app.api.cluster import router as cluster_router
 from app.api.conflicts import router as conflicts_router
 from app.api.feed import router as feed_router
@@ -42,6 +43,39 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             from app.services.suspicion import score_unscored_trades
             await score_unscored_trades(db)
     asyncio.create_task(_score_on_startup())
+
+    # Create user_watchlist table if it doesn't exist yet
+    from app.db import _get_session_factory
+    from sqlalchemy import text as _text
+    engine = _get_session_factory().kw["bind"]
+    async with engine.begin() as conn:
+        await conn.execute(_text("""
+            CREATE TABLE IF NOT EXISTS user_watchlist (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR NOT NULL,
+                type VARCHAR NOT NULL,
+                ref_id VARCHAR NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                CONSTRAINT uq_user_watchlist UNIQUE (user_id, type, ref_id)
+            )
+        """))
+        await conn.execute(_text(
+            "CREATE INDEX IF NOT EXISTS idx_user_watchlist_user_id ON user_watchlist(user_id)"
+        ))
+        await conn.execute(_text("""
+            CREATE TABLE IF NOT EXISTS user_ai_history (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR NOT NULL,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                tool_used VARCHAR,
+                result_count INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """))
+        await conn.execute(_text(
+            "CREATE INDEX IF NOT EXISTS idx_user_ai_history_user_id ON user_ai_history(user_id)"
+        ))
 
     yield
 
@@ -91,6 +125,9 @@ app.include_router(conflicts_router)
 
 # Mount AI endpoints (suspicion scores, politician summaries)
 app.include_router(ai_router)
+
+# Mount watchlist endpoints (user follows)
+app.include_router(watchlist_router)
 
 
 @app.get("/health")

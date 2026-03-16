@@ -56,6 +56,22 @@ export interface PoliticianProfile {
   trades: TradeEntry[]
 }
 
+export interface AnnualReturn {
+  year: number
+  trade_count: number
+  priced_count: number
+  weighted_return_pct: number | null
+  avg_sp500_return_pct: number | null
+  alpha: number | null
+}
+
+export interface AnnualReturnsResponse {
+  politician_id: string
+  entries: AnnualReturn[]
+  cached: boolean
+  methodology_note: string
+}
+
 export interface TickerTradeEntry {
   trade_id: string
   politician_id: string

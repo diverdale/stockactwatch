@@ -376,7 +376,6 @@ async def answer_question(question: str, db: AsyncSession) -> dict:
                 model="claude-sonnet-4-6",
                 max_tokens=512,
                 system=SYSTEM_PROMPT,
-                tools=TOOLS,
                 messages=[
                     {"role": "user", "content": question},
                     {"role": "assistant", "content": response.content},

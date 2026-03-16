@@ -1,10 +1,12 @@
 // app/feed/page.tsx
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { auth } from '@clerk/nextjs/server'
 import { FeedTable } from '@/components/feed-table'
 import { FeedFilters } from '@/components/feed-filters'
 import { FeedCsvExport } from '@/components/feed-csv-export'
 import { FeedPagination } from '@/components/feed-pagination'
+import { PaywallGate } from '@/components/paywall-gate'
 import { apiFetch } from '@/lib/api'
 import type { FeedResponse } from '@/lib/types'
 
@@ -15,6 +17,8 @@ export const metadata: Metadata = {
   description: 'Real-time feed of congressional stock trade disclosures filed under the STOCK Act.',
   alternates: { canonical: '/feed' },
 }
+
+const PREVIEW_LIMIT = 5
 
 export default async function FeedPage({
   searchParams,
@@ -28,15 +32,18 @@ export default async function FeedPage({
     sort_dir?: string
   }>
 }) {
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   const params = await searchParams
-  const limit = Math.min(100, Math.max(1, Number(params.limit ?? 50)))
-  const offset = Math.max(0, Number(params.offset ?? 0))
+  const limit = isSignedIn ? Math.min(100, Math.max(1, Number(params.limit ?? 50))) : PREVIEW_LIMIT
+  const offset = isSignedIn ? Math.max(0, Number(params.offset ?? 0)) : 0
 
   const qs = new URLSearchParams()
-  if (params.chamber) qs.set('chamber', params.chamber)
-  if (params.party) qs.set('party', params.party)
-  if (params.sort_by) qs.set('sort_by', params.sort_by)
-  if (params.sort_dir) qs.set('sort_dir', params.sort_dir)
+  if (isSignedIn && params.chamber) qs.set('chamber', params.chamber)
+  if (isSignedIn && params.party) qs.set('party', params.party)
+  if (isSignedIn && params.sort_by) qs.set('sort_by', params.sort_by)
+  if (isSignedIn && params.sort_dir) qs.set('sort_dir', params.sort_dir)
   qs.set('limit', String(limit))
   qs.set('offset', String(offset))
 
@@ -54,13 +61,27 @@ export default async function FeedPage({
             Most recent congressional trade disclosures under the STOCK Act.
           </p>
         </div>
-        <FeedCsvExport entries={data.entries} />
+        {isSignedIn && <FeedCsvExport entries={data.entries} />}
       </div>
-      <FeedFilters />
-      <FeedTable entries={data.entries} sortBy={params.sort_by} sortDir={params.sort_dir as 'asc' | 'desc' | undefined} />
-      <Suspense>
-        <FeedPagination total={data.total} limit={limit} offset={offset} />
-      </Suspense>
+
+      {isSignedIn && <FeedFilters />}
+
+      <FeedTable
+        entries={data.entries}
+        sortBy={isSignedIn ? params.sort_by : undefined}
+        sortDir={isSignedIn ? params.sort_dir as 'asc' | 'desc' | undefined : undefined}
+      />
+
+      {isSignedIn ? (
+        <Suspense>
+          <FeedPagination total={data.total} limit={limit} offset={offset} />
+        </Suspense>
+      ) : (
+        <PaywallGate
+          locked
+          message="Sign in to see the full trade feed"
+        />
+      )}
     </div>
   )
 }

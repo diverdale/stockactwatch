@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   Activity, Users, TrendingUp, Award, DollarSign, Calendar,
 } from 'lucide-react'
+import { FollowButton } from '@/components/follow-button'
+import { PaywallGate } from '@/components/paywall-gate'
 import type { TickerTradeEntry } from '@/lib/types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -212,12 +214,14 @@ export function TickerDashboard({
   sector,
   sectorSlug,
   allTrades,
+  isSignedIn = true,
 }: {
   ticker: string
   companyName: string | null
   sector: string | null
   sectorSlug: string | null
   allTrades: TickerTradeEntry[]
+  isSignedIn?: boolean
 }) {
   const [periodIdx, setPeriodIdx] = useState(4) // default "All"
   const period = PERIODS[periodIdx]
@@ -336,6 +340,9 @@ export function TickerDashboard({
               )}
             </div>
           )}
+          <div className="mt-3">
+            <FollowButton type="ticker" refId={ticker} />
+          </div>
           <div className="flex flex-wrap gap-1 mt-3">
             {PERIODS.map((p, i) => (
               <button
@@ -425,6 +432,7 @@ export function TickerDashboard({
         </div>
       </div>
 
+      <PaywallGate locked={!isSignedIn} className="lg:col-span-2">
       {/* ── Center column ─────────────────────────────────────────────────── */}
       <div className="space-y-4">
         {trades.length === 0 ? (
@@ -582,6 +590,7 @@ export function TickerDashboard({
           colorMap={{ Buy: '#34d399', Sell: '#f87171' }}
         />
       </div>
+      </PaywallGate>
 
     </div>
   )

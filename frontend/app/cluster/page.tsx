@@ -1,6 +1,8 @@
 // app/cluster/page.tsx
 import type { Metadata } from 'next'
+import { auth } from '@clerk/nextjs/server'
 import { apiFetch } from '@/lib/api'
+import { PaywallGate } from '@/components/paywall-gate'
 import { PeriodSelector } from './period-selector'
 import { ClusterCard } from './cluster-card'
 import type { ClusterEntry } from './cluster-card'
@@ -19,13 +21,14 @@ interface ClusterResponse {
   total: number
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default async function ClusterPage({
   searchParams,
 }: {
   searchParams: Promise<{ days?: string }>
 }) {
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   const params = await searchParams
   const days = params.days ?? '30'
 
@@ -34,9 +37,8 @@ export default async function ClusterPage({
     { revalidate: 1800, tags: ['cluster'] }
   )
 
-  return (
+  const content = (
     <div className="space-y-8">
-      {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Cluster Trades</h1>
@@ -52,13 +54,10 @@ export default async function ClusterPage({
         </div>
       </div>
 
-      {/* Grid */}
       {data.entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 py-20 text-center">
           <p className="text-lg font-medium text-muted-foreground">No clusters found</p>
-          <p className="mt-1 text-sm text-muted-foreground/70">
-            Try expanding the time window above
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground/70">Try expanding the time window above</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -69,4 +68,14 @@ export default async function ClusterPage({
       )}
     </div>
   )
+
+  if (!isSignedIn) {
+    return (
+      <PaywallGate locked size="page" message="Sign in to see which stocks multiple members are trading simultaneously">
+        {content}
+      </PaywallGate>
+    )
+  }
+
+  return content
 }

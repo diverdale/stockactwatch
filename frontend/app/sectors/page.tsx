@@ -1,5 +1,7 @@
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
 import { apiFetch } from '@/lib/api'
+import { PaywallGate } from '@/components/paywall-gate'
 import type { SectorEntry, SectorOverviewResponse } from '@/lib/types'
 
 export const revalidate = 600
@@ -170,6 +172,9 @@ function SectorCard({ sector }: { sector: SectorEntry }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function SectorsPage() {
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   const data = await apiFetch<SectorOverviewResponse>('/sectors', {
     tags: ['sectors-overview'],
     revalidate: 600,
@@ -179,7 +184,7 @@ export default async function SectorsPage() {
   const bullishCount = data.sectors.filter(s => s.sentiment === 'bullish').length
   const trendingCount = data.sectors.filter(s => s.is_trending).length
 
-  return (
+  const content = (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <div>
@@ -221,4 +226,14 @@ export default async function SectorsPage() {
       )}
     </div>
   )
+
+  if (!isSignedIn) {
+    return (
+      <PaywallGate locked size="page" message="Sign in to see which sectors Congress is buying and selling">
+        {content}
+      </PaywallGate>
+    )
+  }
+
+  return content
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8000'
 
@@ -10,9 +11,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Question is required' }, { status: 400 })
     }
 
+    const { userId } = await auth()
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (userId) headers['X-User-Id'] = userId
+
     const res = await fetch(`${API_URL}/ai/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ question }),
     })
 
