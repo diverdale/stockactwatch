@@ -15,7 +15,7 @@ import {
   LayoutDashboard,
   Zap,
 } from 'lucide-react'
-import { SignInButton, SignUpButton, UserButton, Show } from '@clerk/nextjs'
+import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
 import { SearchCombobox } from '@/components/search-combobox'
 
 const links = [
@@ -31,6 +31,7 @@ const links = [
 export function SiteNav() {
   const pathname = usePathname()
   const askActive = pathname === '/ask'
+  const { isSignedIn, isLoaded } = useUser()
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -82,25 +83,27 @@ export function SiteNav() {
           })}
 
           {/* Dashboard — signed-in only */}
-          <Show when="signed-in">
-            <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
-            <Link
-              href="/dashboard"
-              className={`
-                group flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
-                transition-all duration-150 whitespace-nowrap
-                ${pathname === '/dashboard' || pathname.startsWith('/dashboard/')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-                }
-              `}
-            >
-              <LayoutDashboard className={`h-3.5 w-3.5 shrink-0 transition-colors ${
-                pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
-              }`} />
-              <span className="hidden xl:inline">Dashboard</span>
-            </Link>
-          </Show>
+          {isLoaded && isSignedIn && (
+            <>
+              <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
+              <Link
+                href="/dashboard"
+                className={`
+                  group flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium
+                  transition-all duration-150 whitespace-nowrap
+                  ${pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                  }
+                `}
+              >
+                <LayoutDashboard className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+                  pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
+                }`} />
+                <span className="hidden xl:inline">Dashboard</span>
+              </Link>
+            </>
+          )}
 
           {/* Pricing */}
           <div className="mx-1 h-4 w-px bg-border/60 shrink-0" />
@@ -144,19 +147,21 @@ export function SiteNav() {
         {/* Search + auth */}
         <div className="flex items-center gap-3 shrink-0">
           <SearchCombobox />
-          <Show when="signed-out">
-            <SignInButton>
-              <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton>
-              <button className="text-xs font-medium rounded-md bg-primary/15 text-primary px-2.5 py-1.5 hover:bg-primary/25 transition-colors">
-                Sign up
-              </button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
+          {isLoaded && !isSignedIn && (
+            <>
+              <SignInButton>
+                <button className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Sign in
+                </button>
+              </SignInButton>
+              <SignUpButton>
+                <button className="text-xs font-medium rounded-md bg-primary/15 text-primary px-2.5 py-1.5 hover:bg-primary/25 transition-colors">
+                  Sign up
+                </button>
+              </SignUpButton>
+            </>
+          )}
+          {isLoaded && isSignedIn && (
             <UserButton
               appearance={{
                 elements: {
@@ -164,7 +169,7 @@ export function SiteNav() {
                 },
               }}
             />
-          </Show>
+          )}
         </div>
       </div>
     </nav>
