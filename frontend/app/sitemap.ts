@@ -30,11 +30,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // Dynamic politician pages
-  const politicians = await safeFetch<{ entries: { politician_id: string }[] }>(
-    `${API}/politicians?limit=1000`
+  const politicians = await safeFetch<{ politicians: { politician_id: string }[] }>(
+    `${API}/politicians`
   )
   const politicianRoutes: MetadataRoute.Sitemap =
-    politicians?.entries.map(p => ({
+    politicians?.politicians?.map(p => ({
       url: `${BASE}/politicians/${p.politician_id}`,
       changeFrequency: 'daily' as const,
       priority: 0.7,
@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     `${API}/tickers?limit=2000`
   )
   const tickerRoutes: MetadataRoute.Sitemap =
-    tickers?.tickers.map(t => ({
+    tickers?.tickers?.map(t => ({
       url: `${BASE}/tickers/${t.ticker}`,
       changeFrequency: 'daily' as const,
       priority: 0.6,
