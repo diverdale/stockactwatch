@@ -25,57 +25,52 @@ from app.db import dispose_engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Railway single-process: APScheduler runs in-process on the event loop.
-    # Deferred import so main.py is importable before scheduler.py exists (Plan 01-01 decision).
-    from app.ingestion.scheduler import register_jobs  # noqa: PLC0415
+    import logging
+    _log = logging.getLogger(__name__)
 
-    scheduler = AsyncIOScheduler()
-    register_jobs(scheduler)
-    scheduler.start()
+    # Create runtime tables before anything else touches the DB
+    from app.db import AsyncSessionLocal
+    from sqlalchemy import text as _text
+    try:
+        async with AsyncSessionLocal() as _sess:
+            async with _sess.begin():
+                await _sess.execute(_text("""
+                    CREATE TABLE IF NOT EXISTS user_watchlist (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        user_id VARCHAR NOT NULL,
+                        type VARCHAR NOT NULL,
+                        ref_id VARCHAR NOT NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                        CONSTRAINT uq_user_watchlist UNIQUE (user_id, type, ref_id)
+                    )
+                """))
+                await _sess.execute(_text(
+                    "CREATE INDEX IF NOT EXISTS idx_user_watchlist_user_id ON user_watchlist(user_id)"
+                ))
+                await _sess.execute(_text("""
+                    CREATE TABLE IF NOT EXISTS user_ai_history (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        user_id VARCHAR NOT NULL,
+                        question TEXT NOT NULL,
+                        answer TEXT NOT NULL,
+                        tool_used VARCHAR,
+                        result_count INTEGER NOT NULL DEFAULT 0,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+                    )
+                """))
+                await _sess.execute(_text(
+                    "CREATE INDEX IF NOT EXISTS idx_user_ai_history_user_id ON user_ai_history(user_id)"
+                ))
+    except Exception as exc:
+        _log.error("Lifespan: failed to create runtime tables: %s", exc)
 
     redis_cache._pool = redis_cache.create_pool(settings.REDIS_URL)
 
-    # Score any unscored trades in the background
-    import asyncio
-    from app.db import AsyncSessionLocal
-    async def _score_on_startup():
-        async with AsyncSessionLocal() as db:
-            from app.services.suspicion import score_unscored_trades
-            await score_unscored_trades(db)
-    asyncio.create_task(_score_on_startup())
-
-    # Create user_watchlist table if it doesn't exist yet
-    from app.db import _get_session_factory
-    from sqlalchemy import text as _text
-    engine = _get_session_factory().kw["bind"]
-    async with engine.begin() as conn:
-        await conn.execute(_text("""
-            CREATE TABLE IF NOT EXISTS user_watchlist (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR NOT NULL,
-                type VARCHAR NOT NULL,
-                ref_id VARCHAR NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-                CONSTRAINT uq_user_watchlist UNIQUE (user_id, type, ref_id)
-            )
-        """))
-        await conn.execute(_text(
-            "CREATE INDEX IF NOT EXISTS idx_user_watchlist_user_id ON user_watchlist(user_id)"
-        ))
-        await conn.execute(_text("""
-            CREATE TABLE IF NOT EXISTS user_ai_history (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR NOT NULL,
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                tool_used VARCHAR,
-                result_count INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-            )
-        """))
-        await conn.execute(_text(
-            "CREATE INDEX IF NOT EXISTS idx_user_ai_history_user_id ON user_ai_history(user_id)"
-        ))
+    # Railway single-process: APScheduler runs in-process on the event loop.
+    from app.ingestion.scheduler import register_jobs  # noqa: PLC0415
+    scheduler = AsyncIOScheduler()
+    register_jobs(scheduler)
+    scheduler.start()
 
     yield
 
