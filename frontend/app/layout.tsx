@@ -2,6 +2,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { Providers } from './providers'
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -43,11 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <NuqsAdapter>
-          <SiteNav />
-          <main className="mx-auto max-w-7xl px-4 py-10 pb-14">{children}</main>
-          <SiteFooter />
-        </NuqsAdapter>
+        <Providers>
+          <NuqsAdapter>
+            <SiteNav />
+            <main className="mx-auto max-w-7xl px-4 py-10 pb-14">{children}</main>
+            <SiteFooter />
+          </NuqsAdapter>
+        </Providers>
       </body>
     </html>
   )
