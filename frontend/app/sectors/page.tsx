@@ -158,13 +158,6 @@ function SectorCard({ sector }: { sector: SectorEntry }) {
         </div>
       </div>
 
-      {/* Footer bar */}
-      <div className="mt-4 h-1.5 rounded-full overflow-hidden bg-muted/30">
-        <div
-          className="h-full bg-emerald-400 rounded-full transition-all"
-          style={{ width: `${buyPct}%` }}
-        />
-      </div>
     </Link>
   )
 }
