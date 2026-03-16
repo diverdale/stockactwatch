@@ -24,41 +24,56 @@ class PriceClient(ABC):
 
 
 class YFinancePriceClient(PriceClient):
-    """yfinance-backed price client for local dev.
+    """yfinance-backed price client.
 
-    NOTE: yfinance is for LOCAL DEV ONLY — rate limited in production.
-    FMP implementation will be added before launch.
+    NOTE: yfinance is rate limited — all blocking calls run in a thread pool
+    via asyncio.to_thread so they never block the uvicorn event loop.
     """
+
+    # Limit concurrent yfinance requests to avoid rate limiting and thread explosion
+    _semaphore: "asyncio.Semaphore | None" = None
+
+    def _get_semaphore(self) -> "asyncio.Semaphore":
+        import asyncio
+        if self._semaphore is None:
+            YFinancePriceClient._semaphore = asyncio.Semaphore(3)
+        return self._semaphore  # type: ignore[return-value]
 
     async def get_daily_close(self, ticker: str, as_of_date: date) -> Decimal | None:
         """Fetch closing price for ticker on as_of_date via yfinance.
 
         Returns Decimal on success, None on any error (never raises to caller).
+        Runs the blocking yfinance call in a thread so it doesn't block the event loop.
         """
-        try:
-            import yfinance as yf
+        import asyncio
 
-            # Download a small window around the target date to handle weekends/holidays
-            start = as_of_date
-            end = as_of_date + timedelta(days=5)
-            df = yf.download(
-                ticker,
-                start=start.isoformat(),
-                end=end.isoformat(),
-                auto_adjust=True,
-                progress=False,
-            )
-            if df.empty:
+        async with self._get_semaphore():
+            try:
+                import yfinance as yf
+
+                start = as_of_date
+                end = as_of_date + timedelta(days=5)
+
+                def _download() -> "object":
+                    return yf.download(
+                        ticker,
+                        start=start.isoformat(),
+                        end=end.isoformat(),
+                        auto_adjust=True,
+                        progress=False,
+                    )
+
+                df = await asyncio.to_thread(_download)
+                if df.empty:  # type: ignore[union-attr]
+                    return None
+
+                close = df["Close"].iloc[0]  # type: ignore[union-attr]
+                if hasattr(close, "item"):
+                    close = close.item()
+                return Decimal(str(close))
+            except Exception as exc:
+                logger.warning("YFinancePriceClient: failed to fetch %s on %s: %s", ticker, as_of_date, exc)
                 return None
-
-            # Take the first row (closest trading day on or after as_of_date)
-            close = df["Close"].iloc[0]
-            if hasattr(close, "item"):
-                close = close.item()  # numpy scalar → Python float
-            return Decimal(str(close))
-        except Exception as exc:
-            logger.warning("YFinancePriceClient: failed to fetch %s on %s: %s", ticker, as_of_date, exc)
-            return None
 
 
 async def fetch_and_store_prices(
