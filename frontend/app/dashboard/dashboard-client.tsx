@@ -84,6 +84,34 @@ interface DashboardStats {
   monthly_activity: MonthlyActivity[]
 }
 
+interface EnrichedPolitician {
+  ref_id: string
+  name: string
+  party: string | null
+  chamber: string | null
+  state: string | null
+  photo_url: string | null
+  total_trades: number
+  recent_trades: number
+  last_trade_date: string | null
+  buy_pct: number | null
+}
+
+interface EnrichedTicker {
+  ref_id: string
+  name: string | null
+  sector: string | null
+  sector_slug: string | null
+  recent_trades: number
+  last_trade_date: string | null
+  buy_pct: number | null
+}
+
+interface EnrichedWatchlist {
+  politicians: EnrichedPolitician[]
+  tickers: EnrichedTicker[]
+}
+
 interface Props {
   firstName: string | null
   imageUrl: string
@@ -281,6 +309,129 @@ function ActivitySparkline({ data }: { data: MonthlyActivity[] }) {
           />
         </AreaChart>
       </ResponsiveContainer>
+    </div>
+  )
+}
+
+const PARTY_BADGE: Record<string, string> = {
+  Republican: 'bg-red-500/15 text-red-400',
+  Democrat:   'bg-blue-500/15 text-blue-400',
+}
+
+function EnrichedPoliticianCard({ pol, onUnfollow }: { pol: EnrichedPolitician; onUnfollow: (id: string) => void }) {
+  const [removing, startTransition] = useTransition()
+  const bullish = pol.buy_pct !== null && pol.buy_pct >= 50
+  const partyBadge = pol.party ? (PARTY_BADGE[pol.party] ?? 'bg-muted/60 text-muted-foreground') : null
+
+  return (
+    <div className={`flex items-start gap-3 px-4 py-3.5 border-b border-border/40 last:border-0 transition-opacity ${removing ? 'opacity-40' : ''}`}>
+      {/* Avatar */}
+      <div className={`relative shrink-0 h-10 w-10 rounded-full ring-2 overflow-hidden bg-muted ${PARTY_RING[pol.party ?? ''] ?? 'ring-border/40'}`}>
+        {pol.photo_url ? (
+          <Image src={pol.photo_url} alt={pol.name} width={40} height={40}
+            className="object-cover object-top w-full h-full"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-[10px] font-bold text-muted-foreground">{initials(pol.name)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Link href={`/politicians/${pol.ref_id}`}
+            className="text-sm font-semibold hover:text-primary transition-colors truncate">
+            {pol.name}
+          </Link>
+          {partyBadge && (
+            <span className={`text-[9px] font-bold px-1.5 py-px rounded ${partyBadge}`}>
+              {pol.party === 'Republican' ? 'R' : pol.party === 'Democrat' ? 'D' : pol.party}
+            </span>
+          )}
+          {pol.state && <span className="text-[10px] text-muted-foreground">{pol.state}</span>}
+        </div>
+        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+          <span className="text-[11px] text-muted-foreground">
+            <span className="font-semibold text-foreground">{pol.total_trades.toLocaleString()}</span> total trades
+          </span>
+          {pol.recent_trades > 0 && (
+            <span className="text-[11px] text-primary font-medium">
+              {pol.recent_trades} in last 30d
+            </span>
+          )}
+          {pol.buy_pct !== null && (
+            <span className={`text-[11px] font-semibold ${bullish ? 'text-emerald-400' : 'text-orange-400'}`}>
+              {bullish ? '▲' : '▼'} {pol.buy_pct}% buy
+            </span>
+          )}
+          {pol.last_trade_date && (
+            <span className="text-[10px] text-muted-foreground/60">
+              Last: {pol.last_trade_date}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <button onClick={() => startTransition(async () => {
+        await fetch(`/api/watchlist/politician/${pol.ref_id}`, { method: 'DELETE' })
+        onUnfollow(pol.ref_id)
+      })} disabled={removing} className="p-1 rounded text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/50 transition-colors shrink-0 mt-0.5" title="Unfollow">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
+
+function EnrichedTickerCard({ ticker, onUnfollow }: { ticker: EnrichedTicker; onUnfollow: (id: string) => void }) {
+  const [removing, startTransition] = useTransition()
+  const bullish = ticker.buy_pct !== null && ticker.buy_pct >= 50
+
+  return (
+    <div className={`flex items-start gap-3 px-4 py-3.5 border-b border-border/40 last:border-0 transition-opacity ${removing ? 'opacity-40' : ''}`}>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 shrink-0 ring-1 ring-border/40">
+        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link href={`/tickers/${ticker.ref_id}`}
+            className="font-mono text-sm font-bold hover:text-primary transition-colors">
+            {ticker.ref_id}
+          </Link>
+          {ticker.name && ticker.name !== ticker.ref_id && (
+            <span className="text-[11px] text-muted-foreground truncate">
+              {ticker.name.replace(/\s+(Inc\.?|Corp\.?|Ltd\.?|LLC\.?|Co\.?|Group|Holdings?|Technologies?|Pharmaceuticals?|Bancorp|International)$/i, '').trim()}
+            </span>
+          )}
+          {ticker.sector && (
+            <span className="text-[9px] px-1.5 py-px rounded bg-muted/60 text-muted-foreground">{ticker.sector}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+          {ticker.recent_trades > 0 ? (
+            <span className="text-[11px] text-primary font-medium">{ticker.recent_trades} trades in 30d</span>
+          ) : (
+            <span className="text-[11px] text-muted-foreground/60">No recent trades</span>
+          )}
+          {ticker.buy_pct !== null && (
+            <span className={`text-[11px] font-semibold ${bullish ? 'text-emerald-400' : 'text-orange-400'}`}>
+              {bullish ? '▲' : '▼'} {ticker.buy_pct}% buy
+            </span>
+          )}
+          {ticker.last_trade_date && (
+            <span className="text-[10px] text-muted-foreground/60">Last: {ticker.last_trade_date}</span>
+          )}
+        </div>
+      </div>
+
+      <button onClick={() => startTransition(async () => {
+        await fetch(`/api/watchlist/ticker/${ticker.ref_id}`, { method: 'DELETE' })
+        onUnfollow(ticker.ref_id)
+      })} disabled={removing} className="p-1 rounded text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/50 transition-colors shrink-0 mt-0.5" title="Unfollow">
+        <X className="h-3 w-3" />
+      </button>
     </div>
   )
 }
@@ -535,7 +686,7 @@ function AiHistoryList({ entries }: { entries: AiHistoryEntry[] }) {
 
 export function DashboardClient({ firstName, imageUrl }: Props) {
   const [watchlistTab, setWatchlistTab] = useState<'politicians' | 'tickers'>('politicians')
-  const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([])
+  const [enriched, setEnriched] = useState<EnrichedWatchlist>({ politicians: [], tickers: [] })
   const [aiHistory, setAiHistory] = useState<AiHistoryEntry[]>([])
   const [siteStats, setSiteStats] = useState<SiteStats | null>(null)
   const [recentTrades, setRecentTrades] = useState<FeedEntry[]>([])
@@ -544,13 +695,13 @@ export function DashboardClient({ firstName, imageUrl }: Props) {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/watchlist').then(r => r.json()).catch(() => []),
+      fetch('/api/watchlist/enriched').then(r => r.json()).catch(() => ({ politicians: [], tickers: [] })),
       fetch('/api/ai-history').then(r => r.json()).catch(() => []),
       fetch('/api/stats').then(r => r.json()).catch(() => null),
       fetch('/api/recent-trades').then(r => r.json()).catch(() => ({ entries: [] })),
       fetch('/api/dashboard-stats').then(r => r.json()).catch(() => null),
     ]).then(([wl, ai, stats, feed, dash]) => {
-      setWatchlist(Array.isArray(wl) ? wl : [])
+      setEnriched(wl ?? { politicians: [], tickers: [] })
       setAiHistory(Array.isArray(ai) ? ai : [])
       setSiteStats(stats)
       setRecentTrades(Array.isArray(feed.entries) ? feed.entries : [])
@@ -559,15 +710,17 @@ export function DashboardClient({ firstName, imageUrl }: Props) {
     })
   }, [])
 
-  const politicians = watchlist.filter(e => e.type === 'politician')
-  const tickers = watchlist.filter(e => e.type === 'ticker')
+  const { politicians, tickers } = enriched
 
-  function removeEntry(entry: WatchlistEntry) {
-    setWatchlist(prev => prev.filter(e => !(e.type === entry.type && e.ref_id === entry.ref_id)))
+  function removePolitician(id: string) {
+    setEnriched(prev => ({ ...prev, politicians: prev.politicians.filter(p => p.ref_id !== id) }))
+  }
+  function removeTicker(id: string) {
+    setEnriched(prev => ({ ...prev, tickers: prev.tickers.filter(t => t.ref_id !== id) }))
   }
 
   const greeting = firstName ? `Welcome back, ${firstName}` : 'Welcome back'
-  const followingCount = watchlist.length
+  const followingCount = politicians.length + tickers.length
 
   return (
     <div className="space-y-8">
@@ -597,7 +750,7 @@ export function DashboardClient({ firstName, imageUrl }: Props) {
       {/* Quick stats row */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Following', value: loaded ? String(followingCount) : '—', icon: BookmarkPlus },
+          { label: 'Following', value: loaded ? String(politicians.length) : '—', icon: BookmarkPlus },
           { label: 'Tickers Watched', value: loaded ? String(tickers.length) : '—', icon: TrendingUp },
           { label: 'AI Queries', value: loaded ? String(aiHistory.length) : '—', icon: Sparkles },
         ].map(({ label, value, icon: Icon }) => (
@@ -653,8 +806,8 @@ export function DashboardClient({ firstName, imageUrl }: Props) {
                 />
               ) : (
                 <div>
-                  {politicians.map(entry => (
-                    <WatchlistRow key={entry.ref_id} entry={entry} onUnfollow={removeEntry} />
+                  {politicians.map(pol => (
+                    <EnrichedPoliticianCard key={pol.ref_id} pol={pol} onUnfollow={removePolitician} />
                   ))}
                 </div>
               )
@@ -669,8 +822,8 @@ export function DashboardClient({ firstName, imageUrl }: Props) {
                 />
               ) : (
                 <div>
-                  {tickers.map(entry => (
-                    <WatchlistRow key={entry.ref_id} entry={entry} onUnfollow={removeEntry} />
+                  {tickers.map(ticker => (
+                    <EnrichedTickerCard key={ticker.ref_id} ticker={ticker} onUnfollow={removeTicker} />
                   ))}
                 </div>
               )
