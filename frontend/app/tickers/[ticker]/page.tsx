@@ -36,10 +36,15 @@ export default async function TickerPage({
   const { userId } = await auth()
   const isSignedIn = !!userId
 
-  const data = await apiFetch<TickerTrades>(`/tickers/${TICKER}`, {
-    tags: [`ticker-${TICKER}`, 'tickers'],
-    revalidate: 3600,
-  })
+  const [data, priceHistory] = await Promise.all([
+    apiFetch<TickerTrades>(`/tickers/${TICKER}`, {
+      tags: [`ticker-${TICKER}`, 'tickers'],
+      revalidate: 3600,
+    }),
+    apiFetch<{ month: string; price: number }[]>(`/tickers/${TICKER}/price-history`, {
+      revalidate: 3600,
+    }).catch(() => []),
+  ])
 
   return (
     <TickerDashboard
@@ -48,6 +53,7 @@ export default async function TickerPage({
       sector={data.sector ?? null}
       sectorSlug={data.sector_slug ?? null}
       allTrades={data.trades}
+      priceHistory={priceHistory}
       isSignedIn={isSignedIn}
     />
   )

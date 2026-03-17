@@ -167,6 +167,33 @@ export default function GuidePage() {
         </AiCallout>
       </Section>
 
+      <Section title="Disclosure Grade">
+        <p>
+          Each member profile shows a <strong className="text-foreground">Disclosure Grade</strong> (A–F)
+          based on how promptly they file trades relative to the 45-day STOCK Act deadline.
+          Members with fewer than 5 trades on record do not receive a grade.
+        </p>
+        <p>The grade is a weighted composite of two components:</p>
+        <ul className="list-disc list-inside space-y-1 pl-2">
+          <li>
+            <strong className="text-foreground">On-time % (65%)</strong> — percentage of trades
+            disclosed within 45 days of execution
+          </li>
+          <li>
+            <strong className="text-foreground">Lag score (35%)</strong> — how far below the
+            45-day limit the average filing falls (lower average lag = higher score)
+          </li>
+        </ul>
+        <p>The composite score maps to letter grades:</p>
+        <ul className="list-disc list-inside space-y-1 pl-2">
+          <li><strong className="text-foreground">A</strong> — 85 and above</li>
+          <li><strong className="text-foreground">B</strong> — 70–84</li>
+          <li><strong className="text-foreground">C</strong> — 55–69</li>
+          <li><strong className="text-foreground">D</strong> — 40–54</li>
+          <li><strong className="text-foreground">F</strong> — below 40</li>
+        </ul>
+      </Section>
+
       <Section title="Data limitations">
         <ul className="list-disc list-inside space-y-1 pl-2">
           <li>Filings can be amended — older records may differ from the original disclosure.</li>

@@ -2,8 +2,8 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
-  AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  ComposedChart, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line,
 } from 'recharts'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -214,6 +214,7 @@ export function TickerDashboard({
   sector,
   sectorSlug,
   allTrades,
+  priceHistory = [],
   isSignedIn = true,
 }: {
   ticker: string
@@ -221,6 +222,7 @@ export function TickerDashboard({
   sector: string | null
   sectorSlug: string | null
   allTrades: TickerTradeEntry[]
+  priceHistory?: { month: string; price: number }[]
   isSignedIn?: boolean
 }) {
   const [periodIdx, setPeriodIdx] = useState(4) // default "All"
@@ -264,14 +266,18 @@ export function TickerDashboard({
   }, [trades])
 
   const monthlyData = useMemo(() => {
-    const m: Record<string, { month: string; Buys: number; Sells: number }> = {}
+    const m: Record<string, { month: string; Buys: number; Sells: number; price?: number }> = {}
     for (const t of trades) {
       const month = t.trade_date.substring(0, 7)
       if (!m[month]) m[month] = { month, Buys: 0, Sells: 0 }
       if (isBuy(t)) m[month].Buys++; else m[month].Sells++
     }
+    const priceMap = Object.fromEntries(priceHistory.map(p => [p.month, p.price]))
+    for (const row of Object.values(m)) {
+      if (priceMap[row.month] !== undefined) row.price = priceMap[row.month]
+    }
     return Object.values(m).sort((a, b) => a.month.localeCompare(b.month))
-  }, [trades])
+  }, [trades, priceHistory])
 
   const partyDonut = useMemo(() =>
     partyCount.map(([name, value]) => ({ name, value })),
@@ -445,7 +451,7 @@ export function TickerDashboard({
             <div className="rounded-xl border border-border/60 bg-card/30 p-4">
               <PanelTitle>Monthly Activity — Buys vs Sells</PanelTitle>
               <ResponsiveContainer width="100%" height={190}>
-                <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <ComposedChart data={monthlyData} margin={{ top: 4, right: 40, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="buyGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor="#34d399" stopOpacity={0.3} />
@@ -460,12 +466,21 @@ export function TickerDashboard({
                   <XAxis dataKey="month" tickLine={false} axisLine={false}
                     tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
                     interval="preserveStartEnd" />
-                  <YAxis tickLine={false} axisLine={false} width={24} allowDecimals={false}
+                  <YAxis yAxisId="trades" tickLine={false} axisLine={false} width={24} allowDecimals={false}
                     tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
+                  {priceHistory.length > 0 && (
+                    <YAxis yAxisId="price" orientation="right" tickLine={false} axisLine={false} width={40}
+                      tick={{ fontSize: 9, fill: 'var(--muted-foreground)' }}
+                      tickFormatter={(v) => `$${v}`} />
+                  )}
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="Buys"  stroke="#34d399" strokeWidth={2} fill="url(#buyGrad)" />
-                  <Area type="monotone" dataKey="Sells" stroke="#f87171" strokeWidth={2} fill="url(#sellGrad)" />
-                </AreaChart>
+                  <Area yAxisId="trades" type="monotone" dataKey="Buys"  stroke="#34d399" strokeWidth={2} fill="url(#buyGrad)" />
+                  <Area yAxisId="trades" type="monotone" dataKey="Sells" stroke="#f87171" strokeWidth={2} fill="url(#sellGrad)" />
+                  {priceHistory.length > 0 && (
+                    <Line yAxisId="price" type="monotone" dataKey="price" stroke="#94a3b8"
+                      strokeWidth={1.5} dot={false} strokeDasharray="4 2" connectNulls />
+                  )}
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
 

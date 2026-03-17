@@ -530,6 +530,29 @@ async def get_ticker_trades(
     )
 
 
+@router.get("/tickers/{ticker}/price-history")
+async def get_ticker_price_history(ticker: str) -> list[dict]:
+    """Return monthly close prices for a ticker using yfinance. Dev use only."""
+    import asyncio
+    import yfinance as yf
+
+    ticker_upper = ticker.upper()
+
+    def _fetch() -> list[dict]:
+        hist = yf.Ticker(ticker_upper).history(period="5y", interval="1mo")
+        if hist.empty:
+            return []
+        return [
+            {"month": str(idx)[:7], "price": round(float(row["Close"]), 2)}
+            for idx, row in hist.iterrows()
+        ]
+
+    try:
+        return await asyncio.to_thread(_fetch)
+    except Exception:
+        return []
+
+
 @router.get("/politicians/{politician_id}/sectors", response_model=PoliticianSectorsResponse)
 async def get_politician_sectors(
     politician_id: str,
