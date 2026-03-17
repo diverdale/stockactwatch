@@ -10,7 +10,7 @@ import hmac
 import logging
 
 import httpx
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,13 +42,14 @@ async def trigger_ingest(x_internal_secret: str = Header(...)) -> dict:
 
 @router.post("/internal/backfill")
 async def trigger_backfill(
+    background_tasks: BackgroundTasks,
     x_internal_secret: str = Header(...),
     since: str | None = None,
 ) -> dict:
     """Trigger a full historical backfill from the Quiver bulk endpoint.
 
     Fetches all available congressional trades (back to ~2012) and upserts them.
-    This is a long-running operation — expect several minutes for a full run.
+    This is a long-running operation — runs in the background to avoid proxy timeouts.
 
     Optional query param `since` (YYYY-MM-DD) limits to trades on or after that date.
     Requires the X-Internal-Secret header.
@@ -57,8 +58,8 @@ async def trigger_backfill(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     logger.info("Full backfill triggered via POST /internal/backfill since=%s", since)
-    await run_full_backfill(since_date=since)
-    return {"status": "ok", "message": "Backfill complete", "since": since}
+    background_tasks.add_task(run_full_backfill, since_date=since)
+    return {"status": "accepted", "message": "Backfill started in background", "since": since}
 
 
 @router.get("/internal/health")
@@ -177,16 +178,49 @@ async def backfill_sector_meta(
     return {"status": "ok", "enriched": len(missing_tickers)}
 
 
+@router.get("/internal/logs")
+async def ingestion_logs(
+    x_internal_secret: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 20,
+) -> list[dict]:
+    """Return recent ingestion log entries for the admin dashboard."""
+    if not hmac.compare_digest(x_internal_secret, settings.INTERNAL_SECRET):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from sqlalchemy import select
+    from app.models.ingestion_log import IngestionLog
+
+    rows = (
+        await db.execute(
+            select(IngestionLog)
+            .order_by(IngestionLog.started_at.desc())
+            .limit(limit)
+        )
+    ).scalars().all()
+    return [
+        {
+            "id": str(r.id),
+            "source": r.source,
+            "status": r.status,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "finished_at": r.finished_at.isoformat() if r.finished_at else None,
+            "trades_fetched": r.trades_fetched,
+            "trades_upserted": r.trades_upserted,
+        }
+        for r in rows
+    ]
+
+
 @router.post("/internal/backfill-prices")
 async def backfill_prices(
+    background_tasks: BackgroundTasks,
     request: Request,
     db: AsyncSession = Depends(get_db),
     since: str = "2024-01-01",
 ) -> dict:
     """Bulk-download full price history and recompute returns for all trades since `since`.
 
-    Protected by INTERNAL_SECRET header. This is a slow operation — runs synchronously,
-    expect 5–20 minutes for a full 2-year backfill across 400+ tickers.
+    Protected by INTERNAL_SECRET header. Runs in background to avoid proxy timeouts.
     """
     from datetime import date as date_type
     from app.ingestion.prices import backfill_price_history
@@ -197,5 +231,5 @@ async def backfill_prices(
 
     since_date = date_type.fromisoformat(since)
     logger.info("Price history backfill triggered via POST /internal/backfill-prices since=%s", since)
-    result = await backfill_price_history(db, since_date)
-    return {"status": "ok", "since": since, **result}
+    background_tasks.add_task(backfill_price_history, db, since_date)
+    return {"status": "accepted", "message": "Price backfill started in background", "since": since}
