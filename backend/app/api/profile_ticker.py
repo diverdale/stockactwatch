@@ -510,6 +510,7 @@ async def get_ticker_trades(
             full_name=pol.full_name,
             chamber=pol.chamber,
             party=pol.party,
+            state=pol.state,
             transaction_type=trade.transaction_type,
             trade_date=trade.trade_date,
             disclosure_date=trade.disclosure_date,

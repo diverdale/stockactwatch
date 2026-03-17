@@ -81,6 +81,7 @@ class TickerTradeEntry(BaseModel):
     full_name: str
     chamber: str | None
     party: str | None
+    state: str | None = None
     transaction_type: str
     trade_date: date
     disclosure_date: date

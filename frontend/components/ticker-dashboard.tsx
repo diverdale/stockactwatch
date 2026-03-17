@@ -504,12 +504,13 @@ export function TickerDashboard({
                     {trades.map((trade) => (
                       <tr key={trade.trade_id} className="border-b border-border/60 hover:bg-muted/20 transition-colors">
                         <td className="px-4 py-2.5">
-                          <Link
-                            href={`/politicians/${trade.politician_id}`}
-                            className="font-medium hover:text-primary transition-colors"
-                          >
+                          <Link href={`/politicians/${trade.politician_id}`}
+                            className="font-medium hover:text-primary transition-colors block leading-tight">
                             {trade.full_name}
                           </Link>
+                          {trade.state && (
+                            <span className="text-[10px] text-muted-foreground">{trade.state}</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground text-xs hidden md:table-cell">
                           {[trade.chamber, trade.party].filter(Boolean).join(' · ') || '—'}

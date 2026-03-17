@@ -79,6 +79,7 @@ export interface TickerTradeEntry {
   full_name: string
   chamber: string
   party: string
+  state: string | null
   transaction_type: string
   trade_date: string
   disclosure_date: string
