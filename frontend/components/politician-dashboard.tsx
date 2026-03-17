@@ -319,7 +319,7 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
     const dir = sortDir === 'asc' ? 1 : -1
     return [...trades].sort((a, b) => {
       switch (sortCol) {
-        case 'ticker':      return dir * a.ticker.localeCompare(b.ticker)
+        case 'ticker':      return dir * (a.company_name ?? a.ticker).localeCompare(b.company_name ?? b.ticker)
         case 'asset_type':  return dir * (a.asset_type ?? '').localeCompare(b.asset_type ?? '')
         case 'type':        return dir * (a.transaction_type ?? '').localeCompare(b.transaction_type ?? '')
         case 'size':        return dir * ((a.amount_lower ?? 0) - (b.amount_lower ?? 0))
