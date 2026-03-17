@@ -399,15 +399,15 @@ export function TickerDashboard({
           <PanelTitle>Trade Size</PanelTitle>
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={amountData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid vertical={false} stroke="hsl(var(--border) / 0.3)" />
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.3} />
               <XAxis
                 dataKey="label"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: 'monospace', fontWeight: 700 }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)', fontFamily: 'monospace', fontWeight: 700 }}
               />
               <YAxis tickLine={false} axisLine={false} allowDecimals={false}
-                tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} />
+                tick={{ fontSize: 9, fill: 'var(--muted-foreground)' }} />
               <Tooltip
                 content={({ active, payload }) =>
                   active && payload?.length ? (
@@ -418,7 +418,7 @@ export function TickerDashboard({
                   ) : null
                 }
               />
-              <Bar dataKey="count" name="Trades" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" fillOpacity={0.8} />
+              <Bar dataKey="count" name="Trades" radius={[4, 4, 0, 0]} fill="var(--primary)" fillOpacity={0.8} />
             </BarChart>
           </ResponsiveContainer>
           <div className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5">
@@ -456,12 +456,12 @@ export function TickerDashboard({
                       <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="hsl(var(--border) / 0.3)" />
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.3} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false}
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
                     interval="preserveStartEnd" />
                   <YAxis tickLine={false} axisLine={false} width={24} allowDecimals={false}
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="Buys"  stroke="#34d399" strokeWidth={2} fill="url(#buyGrad)" />
                   <Area type="monotone" dataKey="Sells" stroke="#f87171" strokeWidth={2} fill="url(#sellGrad)" />

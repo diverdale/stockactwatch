@@ -36,18 +36,18 @@ export function TradingTimeline({ data, ticker }: TradingTimelineProps) {
       </h3>
       <ChartContainer config={chartConfig} className="min-h-[180px] w-full">
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="hsl(var(--border) / 0.3)" />
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.3} />
           <XAxis
             dataKey="month"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
             interval="preserveStartEnd"
           />
           <YAxis
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
             allowDecimals={false}
             width={28}
           />

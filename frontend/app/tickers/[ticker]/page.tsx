@@ -1,5 +1,6 @@
 // app/tickers/[ticker]/page.tsx
 import type { Metadata } from 'next'
+import { auth } from '@clerk/nextjs/server'
 import { TickerDashboard } from '@/components/ticker-dashboard'
 import { apiFetch } from '@/lib/api'
 import type { TickerTrades } from '@/lib/types'
@@ -32,6 +33,9 @@ export default async function TickerPage({
   const { ticker } = await params
   const TICKER = ticker.toUpperCase()
 
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   const data = await apiFetch<TickerTrades>(`/tickers/${TICKER}`, {
     tags: [`ticker-${TICKER}`, 'tickers'],
     revalidate: 3600,
@@ -44,6 +48,7 @@ export default async function TickerPage({
       sector={data.sector ?? null}
       sectorSlug={data.sector_slug ?? null}
       allTrades={data.trades}
+      isSignedIn={isSignedIn}
     />
   )
 }

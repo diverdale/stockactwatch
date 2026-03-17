@@ -20,6 +20,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react'
 import { SearchCombobox } from '@/components/search-combobox'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const AuthNav = dynamic(() => import('./auth-nav').then(m => m.AuthNav), { ssr: false })
 
@@ -135,10 +136,11 @@ export function SiteNav() {
             })}
           </div>
 
-          {/* Right side: search + auth (desktop) + hamburger (mobile) */}
+          {/* Right side: search + theme + auth (desktop) + hamburger (mobile) */}
           <div className="flex items-center gap-2 ml-auto shrink-0">
             <SearchCombobox />
-            <div className="hidden md:flex items-center">
+            <div className="hidden md:flex items-center gap-2">
+              <ThemeToggle />
               <AuthNav />
             </div>
             {/* Hamburger — mobile only */}
@@ -163,8 +165,8 @@ export function SiteNav() {
 
             <div className="my-3 border-t border-border/40" />
 
-            {/* Auth in mobile menu */}
-            <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center justify-between px-3 py-2">
+              <ThemeToggle />
               <AuthNav />
             </div>
           </div>

@@ -1,6 +1,7 @@
 // app/politicians/[id]/page.tsx
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 import { Disclaimer } from '@/components/disclaimer'
 import { PoliticianDashboard } from '@/components/politician-dashboard'
 import { apiFetch } from '@/lib/api'
@@ -40,6 +41,9 @@ export default async function PoliticianPage({
 }) {
   const { id } = await params
 
+  const { userId } = await auth()
+  const isSignedIn = !!userId
+
   let profile: PoliticianProfile
   try {
     profile = await apiFetch<PoliticianProfile>(`/politicians/${id}`, {
@@ -66,6 +70,7 @@ export default async function PoliticianPage({
       <PoliticianDashboard
         profile={profile}
         sectors={sectorData?.sectors}
+        isSignedIn={isSignedIn}
       />
     </>
   )

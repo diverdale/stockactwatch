@@ -257,10 +257,10 @@ function TradeTimeline({
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={buckets} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-        <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval={2} />
-        <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={28} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} interval={2} />
+        <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} width={28} />
         <Tooltip
-          contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+          contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
           formatter={(value: number) => [`${value} trades`, 'Conflicts']}
         />
         {regions.map((r, i) => (

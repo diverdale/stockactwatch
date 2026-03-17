@@ -615,11 +615,11 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
                       <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="hsl(var(--border) / 0.3)" />
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.3} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} interval="preserveStartEnd"
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
                   <YAxis tickLine={false} axisLine={false} width={24} allowDecimals={false}
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="Buys"  stroke="#34d399" strokeWidth={2} fill="url(#polBuyGrad)" />
                   <Area type="monotone" dataKey="Sells" stroke="#f87171" strokeWidth={2} fill="url(#polSellGrad)" />
