@@ -30,6 +30,7 @@ export interface FeedResponse {
 export interface TradeEntry {
   trade_id: string
   ticker: string
+  company_name: string | null
   asset_type: string
   transaction_type: string
   trade_date: string

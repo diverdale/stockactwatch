@@ -52,6 +52,7 @@ class TradeEntry(BaseModel):
     amount_range_raw: str | None
     amount_lower: int | None
     amount_upper: int | None
+    company_name: str | None = None
     return_calculable: bool
     avg_return_pct: Decimal | None    # from computed_returns if available
     suspicion_score: int | None = None

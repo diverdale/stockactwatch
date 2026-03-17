@@ -124,10 +124,11 @@ async def get_politician_profile(
     if politician is None:
         raise HTTPException(status_code=404, detail="Politician not found")
 
-    # Fetch trades with computed return if available
+    # Fetch trades with computed return and company name if available
     stmt = (
-        select(Trade, ComputedReturn)
+        select(Trade, ComputedReturn, TickerInfo.company_name)
         .outerjoin(ComputedReturn, ComputedReturn.trade_id == Trade.id)
+        .outerjoin(TickerInfo, TickerInfo.ticker == Trade.ticker)
         .where(Trade.politician_id == politician.id)
         .order_by(Trade.trade_date.desc())
     )
@@ -145,6 +146,7 @@ async def get_politician_profile(
         TradeEntry(
             trade_id=str(row[0].id),
             ticker=row[0].ticker,
+            company_name=row[2],
             asset_type=row[0].asset_type,
             transaction_type=row[0].transaction_type,
             trade_date=row[0].trade_date,

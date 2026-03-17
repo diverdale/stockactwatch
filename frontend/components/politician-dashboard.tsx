@@ -639,7 +639,7 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
                 <thead>
                   <tr className="border-b border-border/60 text-left bg-muted/20">
                     {([
-                      { col: 'ticker',     label: 'Ticker',      cls: '' },
+                      { col: 'ticker',     label: 'Stock',       cls: '' },
                       { col: 'asset_type', label: 'Asset',       cls: 'hidden sm:table-cell' },
                       { col: 'type',       label: 'Type',        cls: '' },
                       { col: 'size',       label: 'Size',        cls: '' },
@@ -672,12 +672,14 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
                     const retVal = trade.avg_return_pct !== null ? Number(trade.avg_return_pct) : null
                     return (
                       <tr key={trade.trade_id} className="border-b border-border/60 hover:bg-muted/20 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <Link
-                            href={`/tickers/${trade.ticker}`}
-                            className="font-mono font-semibold hover:text-primary transition-colors"
-                          >
-                            {trade.ticker}
+                        <td className="px-4 py-2.5 max-w-[160px]">
+                          <Link href={`/tickers/${trade.ticker}`} className="block hover:text-primary transition-colors">
+                            <span className="font-semibold text-sm leading-tight block truncate">
+                              {trade.company_name
+                                ? trade.company_name.replace(/\s+(Inc\.?|Corp\.?|Ltd\.?|LLC\.?|Co\.?|Group|Holdings?|Technologies?|Pharmaceuticals?|Bancorp|Bancshares|International)$/i, '').trim()
+                                : trade.ticker}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono">{trade.ticker}</span>
                           </Link>
                         </td>
                         <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell">
