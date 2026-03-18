@@ -10,7 +10,7 @@ from app.config import settings
 
 log = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are an AI assistant for Congress Trades, a transparency site that tracks public stock trading disclosures by US Congress members under the STOCK Act.
+SYSTEM_PROMPT = """You are an AI assistant for Stock Act Watch, a transparency site that tracks public stock trading disclosures by US Congress members under the STOCK Act.
 
 You have tools that query a live database of ~19,000 congressional trades. When a user asks a question:
 1. Use exactly ONE tool call to retrieve the relevant data.

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Congress Trades',
+  title: 'Privacy Policy — Stock Act Watch',
   alternates: { canonical: '/privacy' },
 }
 
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
 
       <Section title="Overview">
         <p>
-          Congress Trades ("we", "our", "us") is committed to protecting your privacy. This policy
+          Stock Act Watch ("we", "our", "us") is committed to protecting your privacy. This policy
           explains what information we collect, how we use it, and your rights regarding that
           information.
         </p>

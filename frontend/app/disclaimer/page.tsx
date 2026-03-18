@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Disclaimer — Congress Trades',
+  title: 'Disclaimer — Stock Act Watch',
   alternates: { canonical: '/disclaimer' },
 }
 
@@ -17,7 +17,7 @@ export default function DisclaimerPage() {
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-4 text-amber-300/90">
           <p className="font-semibold text-amber-300 mb-1">Not investment advice</p>
           <p>
-            Congress Trades is an informational transparency tool. Nothing on this site should
+            Stock Act Watch is an informational transparency tool. Nothing on this site should
             be construed as a recommendation to buy, sell, or hold any security. Past performance
             of any politician's disclosed trades is not indicative of future results.
           </p>
@@ -62,7 +62,7 @@ export default function DisclaimerPage() {
         <div>
           <h2 className="text-base font-bold text-foreground mb-2">No Affiliation</h2>
           <p>
-            Congress Trades is an independent service. We are not affiliated with, endorsed by,
+            Stock Act Watch is an independent service. We are not affiliated with, endorsed by,
             or in any way connected to the US Congress, any government agency, or any political
             party or politician whose trades appear on this site.
           </p>
@@ -71,7 +71,7 @@ export default function DisclaimerPage() {
         <div>
           <h2 className="text-base font-bold text-foreground mb-2">Limitation of Liability</h2>
           <p>
-            Congress Trades and its operators accept no liability for decisions made based on
+            Stock Act Watch and its operators accept no liability for decisions made based on
             information displayed on this site. Use of this site is subject to our{' '}
             <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
               Terms of Use

@@ -93,7 +93,7 @@ export function SiteNav() {
               <Landmark className="h-4 w-4 text-primary" />
             </div>
             <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent text-sm">
-              Congress Trades
+              Stock Act Watch
             </span>
           </Link>
 

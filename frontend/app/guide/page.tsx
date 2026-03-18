@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'How It Works — Congress Trades',
-  description: 'A guide to reading and using Congress Trades — congressional stock disclosure data explained.',
+  title: 'How It Works — Stock Act Watch',
+  description: 'A guide to reading and using Stock Act Watch — congressional stock disclosure data explained.',
   alternates: { canonical: '/guide' },
 }
 

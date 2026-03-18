@@ -10,7 +10,7 @@ import type { ClusterEntry } from './cluster-card'
 export const revalidate = 1800
 
 export const metadata: Metadata = {
-  title: 'Cluster Trades — Congress Trades',
+  title: 'Cluster Trades — Stock Act Watch',
   description:
     'Stocks being traded by multiple Congress members simultaneously — a signal for journalists and researchers.',
 }

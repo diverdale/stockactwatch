@@ -32,7 +32,7 @@ export function SiteFooter() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 font-bold text-base mb-3">
               <BarChart2 className="h-4 w-4 text-primary" />
-              Congress Trades
+              Stock Act Watch
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[220px]">
               Congressional stock trade disclosures made transparent. Data sourced from public
@@ -112,7 +112,7 @@ export function SiteFooter() {
 
         {/* Bottom bar */}
         <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Congress Trades. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Stock Act Watch. All rights reserved.</p>
           <p className="text-center">
             Data sourced from public STOCK Act disclosures via{' '}
             <a

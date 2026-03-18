@@ -4,7 +4,7 @@ import { AskClient } from './ask-client'
 import { PaywallGate } from '@/components/paywall-gate'
 
 export const metadata: Metadata = {
-  title: 'Ask the Data — Congress Trades',
+  title: 'Ask the Data — Stock Act Watch',
   description: 'Ask natural language questions about congressional stock trading activity.',
   alternates: { canonical: '/ask' },
 }

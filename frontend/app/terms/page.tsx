@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Terms of Use — Congress Trades',
+  title: 'Terms of Use — Stock Act Watch',
   alternates: { canonical: '/terms' },
 }
 
@@ -22,14 +22,14 @@ export default function TermsPage() {
 
       <Section title="Acceptance of Terms">
         <p>
-          By accessing or using Congress Trades ("the site"), you agree to be bound by these
+          By accessing or using Stock Act Watch ("the site"), you agree to be bound by these
           Terms of Use. If you do not agree, please do not use the site.
         </p>
       </Section>
 
       <Section title="Description of Service">
         <p>
-          Congress Trades aggregates and displays publicly available STOCK Act disclosures filed
+          Stock Act Watch aggregates and displays publicly available STOCK Act disclosures filed
           by US Congress members. The site provides tools for browsing, filtering, and analysing
           this public data. It is an informational service only.
         </p>
@@ -89,7 +89,7 @@ export default function TermsPage() {
 
       <Section title="Limitation of Liability">
         <p>
-          To the maximum extent permitted by law, Congress Trades and its operators shall not
+          To the maximum extent permitted by law, Stock Act Watch and its operators shall not
           be liable for any direct, indirect, incidental, or consequential damages arising from
           your use of the site or reliance on any data displayed. Your use is at your own risk.
         </p>
