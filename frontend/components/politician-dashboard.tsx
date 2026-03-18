@@ -782,24 +782,24 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
 
         {/* AI summary */}
         {(aiLoading || aiSummary) && (
-          <div className="rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-card/40 to-indigo-950/30 shadow-[0_0_24px_-6px_rgba(139,92,246,0.25)]">
+          <div className="rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-100/60 via-card/40 to-indigo-100/40 dark:from-violet-950/40 dark:via-card/40 dark:to-indigo-950/30 shadow-[0_0_24px_-6px_rgba(139,92,246,0.25)]">
             <button
               onClick={() => setAiOpen(o => !o)}
               className="flex w-full items-center justify-between px-4 py-3"
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm">✦</span>
-                <span className="text-xs font-semibold tracking-wide bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+                <span className="text-xs font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400 bg-clip-text text-transparent">
                   AI Trading Profile
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[9px] text-violet-500/50 font-mono">claude</span>
-                <span className={`text-violet-500/50 text-xs transition-transform duration-200 ${aiOpen ? 'rotate-180' : ''}`}>▾</span>
+                <span className="text-[9px] text-violet-600/60 dark:text-violet-500/50 font-mono">claude</span>
+                <span className={`text-violet-600/60 dark:text-violet-500/50 text-xs transition-transform duration-200 ${aiOpen ? 'rotate-180' : ''}`}>▾</span>
               </div>
             </button>
             {aiOpen && (
-              <div className="px-4 pb-3 border-t border-violet-500/10 pt-3">
+              <div className="px-4 pb-3 border-t border-violet-500/20 pt-3">
                 {aiLoading ? (
                   <div className="space-y-2">
                     <div className="h-2 w-full rounded-full bg-violet-500/10 animate-pulse" />
