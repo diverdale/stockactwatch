@@ -84,11 +84,14 @@ def score_trade(
 
     # 3. Proximity to a committee hearing (trade within HEARING_WINDOW_DAYS after a hearing)
     if trade_dt and committees and hearings:
-        committee_codes = {c.committee_code for c in committees}
+        overlapping_codes = {
+            c.committee_code for c in committees
+            if _committee_overlaps_sector(c.committee_name, sector or "")
+        }
         window_start = trade_dt - timedelta(days=HEARING_WINDOW_DAYS)
         nearby = [
             h for h in hearings
-            if h.committee_code in committee_codes
+            if h.committee_code in overlapping_codes
             and window_start <= h.hearing_date <= trade_dt
         ]
         if nearby:
