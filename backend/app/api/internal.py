@@ -215,7 +215,6 @@ async def ingestion_logs(
 async def rescore_suspicion(
     background_tasks: BackgroundTasks,
     x_internal_secret: str = Header(...),
-    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Null all suspicion scores then re-score every trade.
 
@@ -225,15 +224,20 @@ async def rescore_suspicion(
     if not hmac.compare_digest(x_internal_secret, settings.INTERNAL_SECRET):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    from sqlalchemy import text
-    from app.services.suspicion import score_unscored_trades
-
     async def _run():
-        await db.execute(text("UPDATE trades SET suspicion_score = NULL, suspicion_flags = NULL"))
-        await db.commit()
-        logger.info("Suspicion scores cleared. Re-scoring all trades...")
-        total = await score_unscored_trades(db)
-        logger.info("Suspicion re-score complete: %d trades scored.", total)
+        from sqlalchemy import text
+        from app.services.suspicion import score_unscored_trades
+        from app.db import AsyncSessionLocal
+
+        try:
+            async with AsyncSessionLocal() as session:
+                await session.execute(text("UPDATE trades SET suspicion_score = NULL, suspicion_flags = NULL"))
+                await session.commit()
+                logger.info("Suspicion scores cleared. Re-scoring all trades...")
+                total = await score_unscored_trades(session)
+                logger.info("Suspicion re-score complete: %d trades scored.", total)
+        except Exception as exc:
+            logger.exception("Suspicion re-score failed: %s", exc)
 
     background_tasks.add_task(_run)
     return {"status": "accepted", "message": "Re-score started in background"}
