@@ -77,8 +77,8 @@ export default function PrivacyPage() {
         <p>
           You may request access to, correction of, or deletion of any personal data we hold
           about you by contacting us at{' '}
-          <a href="mailto:hello@congresstrades.io" className="underline underline-offset-2 hover:text-foreground">
-            hello@congresstrades.io
+          <a href="mailto:hello@stockactwatch.com" className="underline underline-offset-2 hover:text-foreground">
+            hello@stockactwatch.com
           </a>
           .
         </p>
@@ -95,8 +95,8 @@ export default function PrivacyPage() {
       <Section title="Contact">
         <p>
           Questions about this policy?{' '}
-          <a href="mailto:hello@congresstrades.io" className="underline underline-offset-2 hover:text-foreground">
-            hello@congresstrades.io
+          <a href="mailto:hello@stockactwatch.com" className="underline underline-offset-2 hover:text-foreground">
+            hello@stockactwatch.com
           </a>
         </p>
       </Section>

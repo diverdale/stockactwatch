@@ -8,56 +8,52 @@ insights no generic financial tool can produce.
 
 ---
 
-## Priority 1: AI Suspicion Score
+## ✅ Priority 1: AI Suspicion Score — SHIPPED
 
 Score every trade 1–10 on how "suspicious" it looks based on signals already in the database.
 
-### Inputs
-- Does the politician sit on a committee that oversees this sector?
-- Was the filing late (>45 days past the STOCK Act deadline)?
-- Large amount ($$$+, i.e. $500K+)?
-- Options trade (higher information asymmetry, harder to detect)?
-- Bought right before a significant price move?
+### Signals (rule-based, no LLM)
+- **Committee-sector overlap** — does the politician sit on a committee that oversees the traded sector? (+3)
+- **Late filing** — filed after the 45-day STOCK Act deadline? (+3) or >30 days? (+1)
+- **Near committee hearing** — traded within 30 days of a relevant committee hearing? (+2)
+- **Large amount** — $500K+? (+1)
+- **Options trade** — higher information asymmetry? (+1)
 
 ### Output
-A score (1–10) + short explanation displayed as a badge on each trade row and politician profile.
+A color-coded badge (Low / Moderate / Elevated / High) with a tooltip breaking down the flags,
+displayed on every trade row in the politician profile trade history table.
 
-### Why it's valuable
-- Defensible and data-driven — not opinion
-- Committee hearing data makes it uniquely possible here
-- Press-worthy: "AI flags most suspicious congressional trades"
-- No user interaction required — runs on ingest
-
-### Implementation Notes
-- Compute score server-side at ingest time, store in `trades` table
-- Rule-based scoring weighted by signal strength (no LLM needed for the score itself)
-- Claude generates the human-readable explanation for each flagged trade
-- Surface as a colored badge: green (1–3), yellow (4–6), orange (7–8), red (9–10)
+### Implementation
+- `suspicion_score` (int) and `suspicion_flags` (JSON text) columns on the `trades` table (migration 0010)
+- `backend/app/services/suspicion.py` — pure rule-based scorer, no API calls
+- `backend/app/services/suspicion.py::score_unscored_trades` — bulk-scores all unscored trades at startup
+- `frontend/components/suspicion-badge.tsx` — badge component with tooltip
+- Suspicion column is sortable in the trade history table (↑↓ arrows)
 
 ---
 
-## Priority 2: AI Politician Trading Summary
+## ✅ Priority 2: AI Politician Trading Summary — SHIPPED
 
 On each politician profile, an AI-written plain English paragraph summarizing their trading patterns.
 
 ### Example Output
-> *"Ro Khanna has made 312 trades totaling an estimated $100M in volume over the past 2 years.
-> He trades heavily in technology and semiconductors — sectors his House Science Committee oversees.
-> His average filing lag of 12 days is well within legal limits, but 14 trades were filed after the
-> 45-day STOCK Act deadline. His buy/sell ratio skews heavily bullish (74% buys), with a concentration
-> in large-cap tech. Estimated portfolio return on calculable trades: +8.2%."*
+> *"Rep. Sessions engaged in 12 equity trades totaling approximately $255K between May 2024 and
+> March 2026, consisting of 5 purchases and 7 sales with no options activity. NVIDIA dominated his
+> trading activity with 4 transactions. His filing compliance was exemplary, with all trades disclosed
+> within the required 45-day STOCK Act window and an average lag of just 2 days."*
 
-### Why it's valuable
-- Makes the data accessible to non-financial users
-- Every politician gets a unique, data-grounded narrative
-- Drives engagement — people will share their rep's summary
-- Low cost: one Claude call per profile, cached and regenerated periodically
+### Implementation
+- `backend/app/services/ai_summary.py` — builds context from DB, calls `claude-haiku-4-5-20251001`
+- `backend/app/api/ai.py` — `GET /ai/politicians/{id}/summary` endpoint
+- Redis cache with 7-day TTL — summary generated on first visit, served instantly thereafter
+- `frontend/app/api/politician-summary/route.ts` — Next.js proxy route handler
+- `frontend/components/politician-dashboard.tsx` — collapsible "AI Trading Profile" card, top-right column
+- Styled with violet/indigo gradient border, glow shadow, and ✦ sparkle — visually distinct from data cards
+- Graceful fallback: section hidden if API key not set or generation fails
 
-### Implementation Notes
-- Generate via Claude API with structured trade data as context
-- Cache in database or Redis, regenerate weekly or on significant new trades
-- Add a "Last updated" timestamp below the summary
-- Graceful fallback if generation fails (just hide the section)
+### Notes
+- Uses `truststore` + `AsyncAnthropic` + `httpx.AsyncClient` to handle macOS/corporate SSL inspection (Cisco)
+- `ANTHROPIC_API_KEY` must be set in `backend/.env`
 
 ---
 
@@ -117,10 +113,10 @@ A chat interface where users can ask questions in plain English and get data-bac
 
 ## Tech Stack for AI Features
 
-| Feature | Approach | Model | Cost estimate |
-|---------|----------|-------|---------------|
-| Suspicion Score | Rule-based scoring + Claude explanation | claude-haiku-4-5 | ~$0.001/trade |
-| Politician Summary | Structured prompt → Claude | claude-sonnet-4-6 | ~$0.01/profile, cached |
-| Q&A Chat | Tool use / text-to-SQL | claude-sonnet-4-6 | ~$0.01–0.05/query |
+| Feature | Approach | Model | Cost estimate | Status |
+|---------|----------|-------|---------------|--------|
+| Suspicion Score | Rule-based scoring | None (rule-based) | $0 | ✅ Shipped |
+| Politician Summary | Structured prompt → Claude | claude-haiku-4-5-20251001 | ~$0.001/profile, cached 7d | ✅ Shipped |
+| Q&A Chat | Tool use / text-to-SQL | claude-sonnet-4-6 | ~$0.01–0.05/query | Planned |
 
-All features use the Anthropic SDK (`@anthropic-ai/sdk` for Next.js, `anthropic` for Python).
+All AI features use the Anthropic Python SDK (`anthropic` package, `AsyncAnthropic` client).

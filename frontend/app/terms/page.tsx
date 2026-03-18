@@ -105,8 +105,8 @@ export default function TermsPage() {
       <Section title="Contact">
         <p>
           Questions?{' '}
-          <a href="mailto:hello@congresstrades.io" className="underline underline-offset-2 hover:text-foreground">
-            hello@congresstrades.io
+          <a href="mailto:hello@stockactwatch.com" className="underline underline-offset-2 hover:text-foreground">
+            hello@stockactwatch.com
           </a>
         </p>
       </Section>

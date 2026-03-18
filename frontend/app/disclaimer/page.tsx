@@ -82,8 +82,8 @@ export default function DisclaimerPage() {
 
         <p className="pt-2 border-t border-border/40">
           Questions?{' '}
-          <a href="mailto:hello@congresstrades.io" className="underline underline-offset-2 hover:text-foreground">
-            hello@congresstrades.io
+          <a href="mailto:hello@stockactwatch.com" className="underline underline-offset-2 hover:text-foreground">
+            hello@stockactwatch.com
           </a>
         </p>
       </div>
