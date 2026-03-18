@@ -213,36 +213,26 @@ async def ingestion_logs(
 
 @router.post("/internal/rescore-suspicion")
 async def rescore_suspicion(
-    background_tasks: BackgroundTasks,
     x_internal_secret: str = Header(...),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Null all suspicion scores then re-score every trade.
 
-    Runs in the background to avoid proxy timeouts.
-    Requires the X-Internal-Secret header.
+    Runs synchronously — may take a few minutes. Requires the X-Internal-Secret header.
     """
     if not hmac.compare_digest(x_internal_secret, settings.INTERNAL_SECRET):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    async def _run():
-        from sqlalchemy import text
-        from app.services.suspicion import score_unscored_trades
-        from app.db import AsyncSessionLocal
+    from sqlalchemy import text
+    from app.services.suspicion import score_unscored_trades
 
-        logger.info("Suspicion re-score background task started.")
-        try:
-            async with AsyncSessionLocal() as session:
-                logger.info("Nulling existing suspicion scores...")
-                await session.execute(text("UPDATE trades SET suspicion_score = NULL, suspicion_flags = NULL"))
-                await session.commit()
-                logger.info("Suspicion scores cleared. Re-scoring all trades...")
-                total = await score_unscored_trades(session)
-                logger.info("Suspicion re-score complete: %d trades scored.", total)
-        except Exception as exc:
-            logger.exception("Suspicion re-score failed: %s", exc)
-
-    background_tasks.add_task(_run)
-    return {"status": "accepted", "message": "Re-score started in background"}
+    logger.info("Suspicion re-score started.")
+    await db.execute(text("UPDATE trades SET suspicion_score = NULL, suspicion_flags = NULL"))
+    await db.commit()
+    logger.info("Suspicion scores cleared. Re-scoring all trades...")
+    total = await score_unscored_trades(db)
+    logger.info("Suspicion re-score complete: %d trades scored.", total)
+    return {"status": "ok", "trades_scored": total}
 
 
 @router.post("/internal/backfill-prices")
