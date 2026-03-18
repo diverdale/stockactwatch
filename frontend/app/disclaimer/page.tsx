@@ -14,8 +14,8 @@ export default function DisclaimerPage() {
 
       <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
 
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-4 text-amber-300/90">
-          <p className="font-semibold text-amber-300 mb-1">Not investment advice</p>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/5 px-5 py-4 text-amber-800 dark:text-amber-300/90">
+          <p className="font-semibold text-amber-900 dark:text-amber-300 mb-1">Not investment advice</p>
           <p>
             Stock Act Watch is an informational transparency tool. Nothing on this site should
             be construed as a recommendation to buy, sell, or hold any security. Past performance
