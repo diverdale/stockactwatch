@@ -229,8 +229,10 @@ async def rescore_suspicion(
         from app.services.suspicion import score_unscored_trades
         from app.db import AsyncSessionLocal
 
+        logger.info("Suspicion re-score background task started.")
         try:
             async with AsyncSessionLocal() as session:
+                logger.info("Nulling existing suspicion scores...")
                 await session.execute(text("UPDATE trades SET suspicion_score = NULL, suspicion_flags = NULL"))
                 await session.commit()
                 logger.info("Suspicion scores cleared. Re-scoring all trades...")
