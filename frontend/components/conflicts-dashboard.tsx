@@ -118,16 +118,16 @@ function CommitteeScorecardCard({
       onClick={onClick}
       className={`w-full rounded-lg border p-3 text-left transition-all cursor-pointer ${
         isSelected
-          ? 'border-amber-400/60 bg-amber-500/10 ring-1 ring-amber-400/40'
-          : 'border-border/60 bg-card/60 hover:border-amber-400/30 hover:bg-card'
+          ? 'border-amber-500/60 bg-amber-50 dark:bg-amber-500/10 ring-1 ring-amber-500/40 dark:ring-amber-400/40'
+          : 'border-border/60 bg-card/60 hover:border-amber-500/40 hover:bg-card'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
         <span
           className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
             isHouse
-              ? 'bg-emerald-500/15 text-emerald-400'
-              : 'bg-amber-500/15 text-amber-400'
+              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+              : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
           }`}
         >
           {card.chamber}
@@ -340,7 +340,7 @@ function TradeRow({
             </span>
           )}
           {trade.role && (
-            <span className="text-[10px] font-medium px-1 py-0.5 rounded bg-amber-500/15 text-amber-400 whitespace-nowrap">
+            <span className="text-[10px] font-medium px-1 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 whitespace-nowrap">
               {trade.role}
             </span>
           )}
@@ -440,8 +440,8 @@ export function ConflictsDashboard({ trades, summary, hearings }: Props) {
         <p className="text-muted-foreground mt-1.5 text-sm">
           Trades where the member sits on an oversight committee for the sector they traded in.
         </p>
-        <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-sm text-amber-300/90">
-          <strong className="text-amber-200">Note:</strong> These trades are not illegal. The STOCK Act requires disclosure but permits trading.
+        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-500/8 px-4 py-3 text-sm text-amber-800 dark:text-amber-300/90">
+          <strong className="text-amber-900 dark:text-amber-200">Note:</strong> These trades are not illegal. The STOCK Act requires disclosure but permits trading.
           Conflicts are based on committee oversight areas and do not imply wrongdoing.
         </div>
       </div>
@@ -502,7 +502,7 @@ export function ConflictsDashboard({ trades, summary, hearings }: Props) {
                 onClick={() => setWindowDays(d)}
                 className={`px-3 py-1.5 transition-colors ${
                   windowDays === d
-                    ? 'bg-amber-500/20 text-amber-300 font-semibold'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 font-semibold'
                     : 'bg-transparent text-muted-foreground hover:bg-muted/40'
                 }`}
               >

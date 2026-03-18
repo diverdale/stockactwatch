@@ -18,7 +18,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-amber-300/90 text-sm leading-relaxed">
+    <div className="rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-500/5 px-4 py-3 text-amber-800 dark:text-amber-300/90 text-sm leading-relaxed">
       {children}
     </div>
   )

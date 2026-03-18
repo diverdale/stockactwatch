@@ -7,10 +7,10 @@ interface Props {
 }
 
 function scoreColor(score: number): string {
-  if (score <= 3) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-  if (score <= 5) return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-  if (score <= 7) return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-  return 'bg-red-500/10 text-red-400 border-red-500/20'
+  if (score <= 3) return 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+  if (score <= 5) return 'bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20'
+  if (score <= 7) return 'bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20'
+  return 'bg-red-50 text-red-700 border-red-300 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
 }
 
 function scoreLabel(score: number): string {

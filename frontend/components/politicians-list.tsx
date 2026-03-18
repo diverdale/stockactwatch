@@ -31,8 +31,8 @@ const PARTY_BADGE: Record<string, string> = {
 }
 
 const CHAMBER_BADGE: Record<string, string> = {
-  House:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-  Senate: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  House:  'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/20',
+  Senate: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/20',
 }
 
 function partyAbbr(party: string | null): string {

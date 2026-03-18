@@ -60,8 +60,8 @@ const PARTY_BADGE: Record<string, string> = {
 }
 
 const CHAMBER_BADGE: Record<string, string> = {
-  House:  'bg-emerald-500/10 text-emerald-400',
-  Senate: 'bg-amber-500/10 text-amber-400',
+  House:  'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  Senate: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,10 +85,10 @@ function fmtDate(iso: string): string {
 }
 
 function lagColor(days: number): string {
-  if (days <= 10) return 'text-emerald-400'
-  if (days <= 30) return 'text-yellow-400'
-  if (days <= 45) return 'text-amber-400'
-  return 'text-orange-400'
+  if (days <= 10) return 'text-emerald-600 dark:text-emerald-400'
+  if (days <= 30) return 'text-yellow-600 dark:text-yellow-400'
+  if (days <= 45) return 'text-amber-600 dark:text-amber-400'
+  return 'text-orange-600 dark:text-orange-400'
 }
 
 function initials(name: string) {

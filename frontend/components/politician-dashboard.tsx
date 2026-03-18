@@ -543,7 +543,7 @@ export function PoliticianDashboard({ profile, sectors, isSignedIn = true }: { p
               icon={Calendar}
               label="Avg Filing Lag"
               value={`${avgFilingLag}d`}
-              accent={avgFilingLag <= 20 ? 'text-emerald-400' : avgFilingLag <= 45 ? 'text-amber-400' : 'text-red-400'}
+              accent={avgFilingLag <= 20 ? 'text-emerald-600 dark:text-emerald-400' : avgFilingLag <= 45 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}
             />
           )}
           {avgReturn !== null && (
